@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LevelUp AI - Active Recall Deck Arena</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            /* Premium Dreamy Sunset Palette */
+            --bg-gradient: linear-gradient(135deg, #1e1b4b 0%, #4c1d95 20%, #831843 45%, #db2777 70%, #f97316 90%, #ffedd5 100%);
+            --text-dark: #1e293b;
+            --text-light: #ffffff;
+            --primary-grad: linear-gradient(135deg, #ff7ebb, #ff9f43);
+            --btn-grad: linear-gradient(90deg, #ff7ebb, #f97316);
+            --glass-bg: rgba(255, 255, 255, 0.11);
+            --glass-border: rgba(255, 255, 255, 0.22);
+            --shadow-sm: 0 8px 32px rgba(49, 16, 66, 0.2);
+            --shadow-md: 0 16px 32px rgba(219, 39, 119, 0.25);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            color: var(--text-light);
+            min-height: 100vh;
+            display: flex;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* --- UNIFORM CORE SIDEBAR NAVIGATION --- */
+        .sidebar {
+            width: 280px;
+            background: rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border-right: 1px solid var(--glass-border);
+            padding: 30px 20px;
+            position: fixed;
+            height: 100%;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo {
+            font-size: 26px;
+            font-weight: 800;
+            margin-bottom: 35px;
+            padding-left: 15px;
+        }
+
+        .logo a {
+            color: var(--text-light);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo i {
+            color: #ff7ebb;
+            filter: drop-shadow(0 0 8px #ff7ebb);
+        }
+
+        .menu {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            overflow-y: auto;
+        }
+
+        .menu a {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            text-decoration: none;
+            color: rgba(255, 255, 255, 0.75);
+            padding: 12px 20px;
+            border-radius: 16px;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.25s ease;
+            border: 1px solid transparent;
+        }
+
+        .menu a:hover, .menu a.active {
+            background: rgba(255, 255, 255, 0.15);
+            color: var(--text-light);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateX(4px);
+        }
+
+        .menu a.active i {
+            color: #ff7ebb;
+        }
+
+        /* --- DISPLAY LAYOUT CONSOLE --- */
+        .main {
+            margin-left: 280px;
+            width: calc(100% - 280px);
+            padding: 50px;
+            position: relative;
+        }
+
+        /* --- MOTIVATIONAL STATEMENT BANNER --- */
+        .quote-banner {
+            background: linear-gradient(135deg, rgba(255, 126, 187, 0.2) 0%, rgba(249, 115, 22, 0.2) 100%);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 24px;
+            padding: 25px 30px;
+            margin-bottom: 35px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .quote-banner i {
+            font-size: 26px;
+            color: #ff9f43;
+            filter: drop-shadow(0 0 6px #ff9f43);
+        }
+
+        .quote-banner p {
+            font-size: 14px;
+            font-weight: 500;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.95);
+            font-style: italic;
+        }
+
+        /* --- PREMIUM WORKSPACE STRUCTURAL GRID --- */
+        .workspace-grid {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 30px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.11);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            padding: 35px;
+            border-radius: 28px;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* High-Transparency Cute Critter Background Watermarks */
+        #generatorCard::before { content: '🐼'; position: absolute; font-size: 110px; bottom: -20px; right: -10px; opacity: 0.04; pointer-events: none; }
+        #arenaCard::before { content: '🦄'; position: absolute; font-size: 140px; top: -30px; right: -20px; opacity: 0.03; pointer-events: none; }
+        #rewardsCard::before { content: '🐱'; position: absolute; font-size: 100px; bottom: -10px; right: 15px; opacity: 0.04; pointer-events: none; }
+
+        h2 {
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        h2 i {
+            color: #ff9f43;
+        }
+
+        /* --- UPLOAD BOX --- */
+        .upload-box {
+            border: 2px dashed rgba(255, 255, 255, 0.4);
+            padding: 40px;
+            text-align: center;
+            border-radius: 20px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.05);
+            display: block;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 15px;
+        }
+
+        .upload-box:hover {
+            border-color: #ff7ebb;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .upload-box i {
+            font-size: 36px;
+            color: #ff7ebb;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .upload-box input {
+            display: none;
+        }
+
+        /* --- HARD-CORE BUTTON INTERFACES --- */
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 16px;
+            background: var(--btn-grad);
+            color: white;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 14px;
+            box-shadow: 0 6px 16px rgba(219, 39, 119, 0.3);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 22px rgba(219, 39, 119, 0.5);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.22);
+            border-color: rgba(255,255,255,0.4);
+        }
+
+        /* --- 3D FLASHCARD ARENA MOUNT --- */
+        .flashcard-container {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+            perspective: 1000px;
+        }
+
+        .flashcard {
+            width: 100%;
+            max-width: 550px;
+            height: 300px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .flashcard.flip {
+            transform: rotateY(180deg);
+        }
+
+        .front, .back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 24px;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 35px;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow-md);
+        }
+
+        .front {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+        }
+
+        .front-tag {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #ff7ebb;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+        }
+
+        .front h3, .back p {
+            font-size: 20px;
+            font-weight: 600;
+            line-height: 1.5;
+        }
+
+        .front-hint {
+            font-size: 12px;
+            opacity: 0.5;
+            margin-top: 25px;
+        }
+
+        .back {
+            background: rgba(255, 255, 255, 0.25);
+            color: white;
+            transform: rotateY(180deg);
+            border-color: #ff9f43;
+        }
+
+        .back-tag {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #ff9f43;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+        }
+
+        .navigation {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 25px;
+        }
+
+        .difficulty-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 16px;
+            background: rgba(34, 197, 94, 0.2);
+            color: #4ade80;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 20px auto 0 auto;
+        }
+
+        /* --- REVISION TELEMETRY PROGRESS --- */
+        .progress-bar-track {
+            height: 12px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            overflow: hidden;
+            margin-top: 15px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 25%;
+            background: linear-gradient(90deg, #ff7ebb, #f97316);
+            box-shadow: 0 0 10px #ff7ebb;
+            border-radius: 20px;
+            transition: width 0.3s ease;
+        }
+
+        /* --- STATS NODE SPACING FLOW --- */
+        .stats-flex-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-node {
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 22px;
+            border-radius: 20px;
+            text-align: center;
+        }
+
+        .stat-node h3 {
+            font-size: 12px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.7);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .stat-node h1 {
+            font-size: 30px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ff7ebb, #ff9f43);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* --- RESPONSIVE BRACKETS --- */
+        @media (max-width: 1100px) {
+            .workspace-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 900px) {
+            .sidebar { display: none; }
+            .main { margin-left: 0; width: 100%; padding: 30px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="sidebar">
+        <div class="logo"><a href="index.html"><i class="fa-solid fa-gamepad"></i> LevelUp</a></div>
+        <div class="menu">
+            <a href="dashboard.html"><i class="fa-solid fa-house"></i> Dashboard</a>
+            <a href="notes.html"><i class="fa-solid fa-camera"></i> Quiz Generator</a>
+            <a href="flashcard.html" class="active"><i class="fa-solid fa-brain"></i> Flashcards</a>
+            <a href="analytics.html"><i class="fa-solid fa-chart-simple"></i> Analytics</a>
+            <a href="studygroup.html"><i class="fa-solid fa-users"></i> Study Lobbies</a>
+            <a href="doubts.html"><i class="fa-solid fa-circle-question"></i> Doubt Core</a>
+            <a href="leaderboard.html"><i class="fa-solid fa-ranking-star"></i> Leaderboard</a>
+            <a href="planner.html"><i class="fa-solid fa-calendar-days"></i> Planner</a>
+            <a href="profile.html"><i class="fa-solid fa-user-gear"></i> Profile</a>
+        </div>
+    </nav>
+
+    <main class="main">
+        <header class="quote-banner">
+            <i class="fa-solid fa-circle-nodes"></i>
+            <p>"Every grand research breakthrough and successfully cleared exam begins exactly where you are right now—one focused session, one mastered concept, and one 'Level Up' at a time. Trust your grind!"</p>
+        </header>
+
+        <div class="workspace-grid">
+            
+            <div class="left-pane">
+                
+                <section class="card" id="arenaCard">
+                    <h2><i class="fa-solid fa-layer-group"></i> Active Recall Deck Arena</h2>
+                    
+                    <div class="flashcard-container">
+                        <div class="flashcard" id="flashcard">
+                            <div class="front">
+                                <span class="front-tag">Telemetry Query Node</span>
+                                <h3 id="frontText">What is Artificial Intelligence?</h3>
+                                <span class="front-hint"><i class="fa-solid fa-rotate"></i> Click Core to Reveal Solution</span>
+                            </div>
+                            <div class="back">
+                                <span class="back-tag">Verified Output Solution</span>
+                                <p id="backText">AI is the simulation of human intelligence by machines.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="navigation">
+                        <button class="btn btn-secondary" id="prevBtn"><i class="fa-solid fa-chevron-left"></i> Prev Card</button>
+                        <button class="btn" id="nextBtn">Next Card <i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+
+                    <div style="text-align: center;">
+                        <div class="difficulty-pill"><i class="fa-solid fa-shield-cat"></i> Intermediate Tier</div>
+                    </div>
+                </section>
+
+                <section class="card">
+                    <h2><i class="fa-solid fa-chart-line"></i> Deck Verification Matrix</h2>
+                    <div class="progress-bar-track">
+                        <div class="progress-fill" id="progress"></div>
+                    </div>
+                </section>
+
+            </div>
+
+            <div class="right-pane">
+                
+                <section class="card" id="generatorCard">
+                    <h2><i class="fa-solid fa-wand-magic-sparkles"></i> AI Flashcard Engine</h2>
+                    <label class="upload-box">
+                        <i class="fa-solid fa-file-invoice"></i>
+                        <span>Upload Handwritten Documentation / PDF</span>
+                        <input type="file" id="fileAttachment">
+                    </label>
+                    <button class="btn" id="generateBtn" style="width: 100%; justify-content: center; margin-top: 20px;">
+                        Synthesize Deck <i class="fa-solid fa-bolt"></i>
+                    </button>
+                </section>
+
+                <section class="card" id="rewardsCard">
+                    <h2><i class="fa-solid fa-award"></i> Synced Session Rewards</h2>
+                    <div class="stats-flex-grid">
+                        <div class="stat-node">
+                            <h3>XP Gained</h3>
+                            <h1>+150 XP</h1>
+                        </div>
+                        <div class="stat-node">
+                            <h3>Cards Parsed</h3>
+                            <h1 id="reviewed">1</h1>
+                        </div>
+                        <div class="stat-node">
+                            <h3>Retention Scale</h3>
+                            <h1>92%</h1>
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary" style="width: 100%; justify-content: center; margin-top: 25px;">
+                        <i class="fa-regular fa-bookmark"></i> Save Modulated Deck
+                    </button>
+                </section>
+
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // CLIENT FLASHCARD POOL MATRIX DATASET
+        const flashcards = [
+            {
+                front: "What is Artificial Intelligence?",
+                back: "AI is the simulation of human intelligence by machines."
+            },
+            {
+                front: "What is Machine Learning?",
+                back: "A subset of AI focused on pattern identification straight from structured data pools."
+            },
+            {
+                front: "What operates as the primary role of a DBMS?",
+                back: "Database Management Systems coordinate storage, retrieval, and structural integrity of database records."
+            },
+            {
+                front: "What structural paradigm characterizes a Queue?",
+                back: "First-In, First-Out (FIFO) sequential data architecture pipelines."
+            }
+        ];
+
+        let current = 0;
+
+        const card = document.getElementById("flashcard");
+        const front = document.getElementById("frontText");
+        const back = document.getElementById("backText");
+        const reviewed = document.getElementById("reviewed");
+        const progress = document.getElementById("progress");
+
+        // Click-flip mechanical triggers
+        card.onclick = () => card.classList.toggle("flip");
+
+        function loadCard() {
+            front.innerText = flashcards[current].front;
+            back.innerText = flashcards[current].back;
+            reviewed.innerText = current + 1;
+            progress.style.width = ((current + 1) / flashcards.length) * 100 + "%";
+            card.classList.remove("flip");
+        }
+
+        document.getElementById("nextBtn").onclick = () => {
+            if (current < flashcards.length - 1) {
+                current++;
+                loadCard();
+            }
+        };
+
+        document.getElementById("prevBtn").onclick = () => {
+            if (current > 0) {
+                current--;
+                loadCard();
+            }
+        };
+
+        document.getElementById("generateBtn").onclick = () => {
+            alert("LevelUp AI: Synthesis Complete. Flashcard deck generated successfully into the viewport arena!");
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LevelUp AI - Secure Access Terminal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            /* Vibrant Sunset Dreamy Gradient: Deep twilight blue merging into rich pinks, magentas, and soft golden oranges */
+            --bg-gradient: linear-gradient(135deg, #1e1b4b 0%, #4c1d95 20%, #831843 45%, #db2777 70%, #f97316 90%, #ffedd5 100%);
+            --text-dark: #0f172a;
+            --text-light: #ffffff;
+            --primary-grad: linear-gradient(135deg, #ff7ebb, #818cf8);
+            --btn-grad: linear-gradient(90deg, #ff7ebb, #ec4899);
+            --glass-bg: rgba(255, 255, 255, 0.12);
+            --glass-border: rgba(255, 255, 255, 0.25);
+            --shadow-md: 0 20px 50px rgba(31, 38, 135, 0.25);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+            position: relative;
+            padding: 20px;
+        }
+
+        /* --- SCENERY --- */
+        .scenery-bg {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: -1; overflow: hidden;
+        }
+
+        .scenery-planet { position: absolute; border-radius: 50%; }
+
+        .planet-top-left {
+            width: 160px; height: 160px;
+            background: linear-gradient(135deg, rgba(244, 63, 94, 0.25), rgba(192, 132, 252, 0.25));
+            top: -20px; left: -20px; border: 1px solid rgba(255, 255, 255, 0.15); filter: blur(2px);
+        }
+
+        .planet-bottom-right {
+            width: 220px; height: 220px;
+            background: linear-gradient(135deg, #fbcfe8, #ca8a04);
+            bottom: -40px; right: -20px; opacity: 0.5; box-shadow: 0 0 50px rgba(253, 224, 71, 0.15);
+        }
+
+        /* --- GLOBAL BACK NAVIGATION --- */
+        .brand-back-nav { position: absolute; top: 30px; left: 5%; z-index: 1010; }
+        .brand-back-nav a {
+            font-size: 24px; font-weight: 800; color: var(--text-light); text-decoration: none;
+            display: flex; align-items: center; gap: 10px; text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            transition: transform 0.2s;
+        }
+        .brand-back-nav a:hover { transform: scale(1.02); }
+        .brand-back-nav i { color: #ff7ebb; filter: drop-shadow(0 0 8px #ff7ebb); }
+
+        /* --- MAIN HYPER-GLASS AUTH CONTAINER --- */
+        .auth-container {
+            width: 950px; max-width: 100%;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            border: 1px solid var(--glass-border); border-radius: 35px;
+            display: flex; overflow: hidden; box-shadow: var(--shadow-md);
+            position: relative; margin-top: 40px;
+        }
+
+        /* --- LEFT BRANDING PANEL --- */
+        .panel-left {
+            width: 42%;
+            background: linear-gradient(135deg, rgba(129, 140, 248, 0.3) 0%, rgba(236, 72, 153, 0.3) 100%);
+            border-right: 1px solid var(--glass-border);
+            padding: 50px 40px; color: var(--text-light);
+            display: flex; flex-direction: column; justify-content: center; position: relative;
+        }
+
+        .panel-left h1 { font-size: 38px; font-weight: 800; line-height: 1.2; margin-bottom: 20px; text-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .panel-left p { color: rgba(255, 255, 255, 0.85); font-size: 14px; line-height: 1.6; margin-bottom: 30px; }
+
+        .badge-list { display: flex; flex-direction: column; gap: 15px; }
+        .magic-badge {
+            background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 14px 18px; border-radius: 20px; font-size: 13px; font-weight: 600;
+            display: flex; align-items: center; gap: 12px; backdrop-filter: blur(5px);
+        }
+        .magic-badge i { font-size: 16px; color: #fde047; filter: drop-shadow(0 0 4px rgba(253,224,71,0.5)); }
+
+        /* --- RIGHT INTERACTIVE FORM PANEL --- */
+        .panel-right { flex: 1; padding: 50px; background: rgba(255, 255, 255, 0.04); display: flex; flex-direction: column; justify-content: center; }
+
+        .form-toggle-header {
+            display: inline-flex; background: rgba(0, 0, 0, 0.2); padding: 6px;
+            border-radius: 30px; margin-bottom: 35px; align-self: flex-start;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .form-toggle-header button {
+            padding: 10px 28px; border: none; border-radius: 25px; cursor: pointer;
+            font-weight: 600; font-size: 14px; transition: all 0.25s ease;
+            background: transparent; color: rgba(255, 255, 255, 0.6);
+        }
+
+        .form-toggle-header button.active { background: rgba(255, 255, 255, 0.25); color: var(--text-light); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+        .auth-form { display: flex; flex-direction: column; gap: 18px; }
+
+        .input-group { position: relative; width: 100%; }
+        .input-group i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: rgba(255, 255, 255, 0.5); font-size: 14px; }
+
+        .auth-form input, .auth-form select {
+            width: 100%; padding: 14px 16px 14px 45px;
+            border: 1px solid rgba(255, 255, 255, 0.2); outline: none; border-radius: 14px;
+            background: rgba(255, 255, 255, 0.15); color: var(--text-light); font-size: 14px;
+            transition: all 0.3s ease; backdrop-filter: blur(5px);
+        }
+
+        .auth-form select {
+            padding-left: 42px; cursor: pointer; appearance: none; -webkit-appearance: none;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='white'><path d='M7 10l5 5 5-5z'/></svg>");
+            background-repeat: no-repeat; background-position: right 16px center;
+        }
+        .auth-form select option { background: #25183a; color: var(--text-light); }
+        .auth-form input::placeholder { color: rgba(255, 255, 255, 0.60); }
+
+        .auth-form input:focus, .auth-form select:focus {
+            background: rgba(255, 255, 255, 0.22); border-color: #ff7ebb; box-shadow: 0 0 14px rgba(255, 126, 187, 0.35);
+        }
+
+        .submit-action-btn {
+            padding: 15px; background: var(--btn-grad); border: none; border-radius: 14px;
+            color: white; font-size: 15px; font-weight: 700; cursor: pointer;
+            box-shadow: 0 8px 20px rgba(236, 72, 153, 0.35); transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .submit-action-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 25px rgba(236, 72, 153, 0.5); }
+
+        .avatar-selector-section { margin-top: 5px; }
+        .avatar-selector-section h4 { font-size: 13px; font-weight: 600; color: rgba(255, 255, 255, 0.85); margin-bottom: 10px; }
+        .avatar-flex-grid { display: flex; gap: 12px; flex-wrap: wrap; }
+
+        .avatar-item {
+            width: 52px; height: 52px; border-radius: 50%; display: flex; justify-content: center; align-items: center;
+            font-size: 22px; cursor: pointer; background: rgba(255, 255, 255, 0.15); border: 2px solid transparent; transition: all 0.25s;
+        }
+        .avatar-item:hover { transform: scale(1.12) translateY(-2px); background: rgba(255, 255, 255, 0.25); }
+        .avatar-item.selected { border-color: #ff7ebb; background: rgba(255, 255, 255, 0.3); box-shadow: 0 0 12px rgba(255, 126, 187, 0.5); }
+
+        .form-switch-prompt { text-align: center; margin-top: 20px; font-size: 13px; color: rgba(255, 255, 255, 0.7); }
+        .form-switch-prompt span { color: #ff7ebb; font-weight: 600; cursor: pointer; text-decoration: underline; }
+
+        #signupForm { display: none; }
+        .sparkle-element { position: absolute; pointer-events: none; z-index: 5; transition: transform 0.1s ease-out; }
+
+        @media (max-width: 850px) {
+            .auth-container { flex-direction: column; margin-top: 60px; }
+            .panel-left, .panel-right { width: 100%; padding: 40px 30px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="scenery-bg">
+        <div class="scenery-planet planet-top-left"></div>
+        <div class="scenery-planet planet-bottom-right"></div>
+    </div>
+
+    <header class="brand-back-nav">
+        <a href="index.html"><i class="fa-solid fa-gamepad"></i> LevelUp</a>
+    </header>
+
+    <main class="auth-container">
+        <section class="panel-left">
+            <h1>Initialize <br>Your Session</h1>
+            <p>Sync your handwritten and digital material directly into live experience trackers and gamified active recall tiers.</p>
+            
+            <div class="badge-list">
+                <div class="magic-badge"><i class="fa-solid fa-bolt"></i> <span>Earn Profile Level XP</span></div>
+                <div class="magic-badge"><i class="fa-solid fa-fire"></i> <span>Maintain Study Streak Counters</span></div>
+                <div class="magic-badge"><i class="fa-solid fa-bullseye"></i> <span>Unlock Daily Learning Rewards</span></div>
+            </div>
+        </section>
+
+        <section class="panel-right">
+            <div class="form-toggle-header">
+                <button id="loginTab" class="active">Login</button>
+                <button id="signupTab">Sign Up</button>
+            </div>
+
+            <form id="loginForm" class="auth-form">
+                <div class="input-group">
+                    <i class="fa-regular fa-envelope"></i>
+                    <input type="email" placeholder="Player Email Address" required>
+                </div>
+                <div class="input-group">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" placeholder="Secure Access Key" required>
+                </div>
+                <button type="submit" class="submit-action-btn">
+                    Authenticate Account <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                </button>
+                <p class="form-switch-prompt">New to the terminal? <span id="toSignupLink">Sign Up</span></p>
+            </form>
+
+            <form id="signupForm" class="auth-form">
+                <div class="input-group">
+                    <i class="fa-regular fa-user"></i>
+                    <input type="text" placeholder="Full Name" required>
+                </div>
+                <div class="input-group">
+                    <i class="fa-regular fa-envelope"></i>
+                    <input type="email" placeholder="Player Email Address" required>
+                </div>
+                <div class="input-group">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" placeholder="Create Access Key" required>
+                </div>
+                <div class="input-group">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                    <select required>
+                        <option value="" disabled selected>Select Class / Academic Year</option>
+                        <option>1st Year</option>
+                        <option>2nd Year</option>
+                        <option>3rd Year</option>
+                        <option>4th Year</option>
+                    </select>
+                </div>
+
+                <div class="avatar-selector-section">
+                    <h4>Select Player Avatar</h4>
+                    <div class="avatar-flex-grid">
+                        <div class="avatar-item selected">🧑‍💻</div>
+                        <div class="avatar-item">🤖</div>
+                        <div class="avatar-item">🦸</div>
+                        <div class="avatar-item">🎮</div>
+                        <div class="avatar-item">🚀</div>
+                        <div class="avatar-item">🐼</div>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-action-btn">
+                    Deploy Profile Tier <i class="fa-solid fa-gamepad"></i>
+                </button>
+                <p class="form-switch-prompt">Already registered a key? <span id="toLoginLink">Log In</span></p>
+            </form>
+        </section>
+    </main>
+
+    <script>
+        const loginTab = document.getElementById("loginTab");
+        const signupTab = document.getElementById("signupTab");
+        const loginForm = document.getElementById("loginForm");
+        const signupForm = document.getElementById("signupForm");
+        const toSignupLink = document.getElementById("toSignupLink");
+        const toLoginLink = document.getElementById("toLoginLink");
+
+        function showLogin() { loginForm.style.display = "flex"; signupForm.style.display = "none"; loginTab.classList.add("active"); signupTab.classList.remove("active"); }
+        function showSignup() { signupForm.style.display = "flex"; loginForm.style.display = "none"; signupTab.classList.add("active"); loginTab.classList.remove("active"); }
+
+        loginTab.onclick = showLogin; signupTab.onclick = showSignup; toSignupLink.onclick = showSignup; toLoginLink.onclick = showLogin;
+
+        const avatars = document.querySelectorAll(".avatar-item");
+        avatars.forEach(avatar => {
+            avatar.addEventListener("click", () => {
+                avatars.forEach(a => a.classList.remove("selected"));
+                avatar.classList.add("selected");
+            });
+        });
+
+        // Redirect handlers to send users cleanly to dashboard.html on form submissions
+        loginForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            window.location.href = "dashboard.html";
+        });
+
+        signupForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            window.location.href = "dashboard.html";
+        });
+
+        function generateDreamyParticles() {
+            const container = document.body;
+            const sparkleIcons = ['✦', '✧', '•', '★'];
+            for (let i = 0; i < 12; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('sparkle-element');
+                particle.innerText = sparkleIcons[Math.floor(Math.random() * sparkleIcons.length)];
+                particle.style.color = ['#ff7ebb', '#818cf8', '#fde047', '#ffffff'][Math.floor(Math.random() * 4)];
+                particle.style.fontSize = `${Math.random() * 14 + 10}px`;
+                particle.style.left = `${Math.random() * 95}%`; particle.style.top = `${Math.random() * 90}%`;
+                particle.style.opacity = '0.6';
+                container.appendChild(particle);
+
+                let driftX = 0; let driftY = 0; let radians = Math.random() * Math.PI * 2;
+                const pace = 0.08 + Math.random() * 0.12;
+
+                function executeDrift() {
+                    radians += 0.003; driftX += Math.cos(radians) * pace; driftY += Math.sin(radians) * pace;
+                    particle.style.transform = `translate(${driftX}px, ${driftY}px)`;
+                    requestAnimationFrame(executeDrift);
+                }
+                executeDrift();
+            }
+        }
+        window.addEventListener('DOMContentLoaded', generateDreamyParticles);
+    </script>
+</body>
+</html>

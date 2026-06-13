@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LevelUp AI - Study Lobbies Hub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            /* High-Vibrancy Sunset Dreamy Palette */
+            --bg-gradient: linear-gradient(135deg, #1e1b4b 0%, #4c1d95 20%, #831843 45%, #db2777 70%, #f97316 90%, #ffedd5 100%);
+            --text-dark: #1e293b;
+            --text-light: #ffffff;
+            --primary-grad: linear-gradient(135deg, #ff7ebb, #ff9f43);
+            --btn-grad: linear-gradient(90deg, #ff7ebb, #f97316);
+            --glass-bg: rgba(255, 255, 255, 0.11);
+            --glass-border: rgba(255, 255, 255, 0.22);
+            --shadow-sm: 0 8px 32px rgba(49, 16, 66, 0.2);
+            --shadow-md: 0 16px 32px rgba(219, 39, 119, 0.25);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            color: var(--text-light);
+            min-height: 100vh;
+            display: flex;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* --- UNIFORM CORE SIDEBAR NAVIGATION --- */
+        .sidebar {
+            width: 280px;
+            background: rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border-right: 1px solid var(--glass-border);
+            padding: 30px 20px;
+            position: fixed;
+            height: 100%;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo {
+            font-size: 26px;
+            font-weight: 800;
+            margin-bottom: 35px;
+            padding-left: 15px;
+        }
+
+        .logo a {
+            color: var(--text-light);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo i {
+            color: #ff7ebb;
+            filter: drop-shadow(0 0 8px #ff7ebb);
+        }
+
+        .menu {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            overflow-y: auto;
+        }
+
+        .menu a {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            text-decoration: none;
+            color: rgba(255, 255, 255, 0.75);
+            padding: 12px 20px;
+            border-radius: 16px;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.25s ease;
+            border: 1px solid transparent;
+        }
+
+        .menu a:hover, .menu a.active {
+            background: rgba(255, 255, 255, 0.15);
+            color: var(--text-light);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateX(4px);
+        }
+
+        .menu a.active i {
+            color: #ff7ebb;
+        }
+
+        /* --- DISPLAY LAYOUT CONSOLE --- */
+        .main {
+            margin-left: 280px;
+            width: calc(100% - 280px);
+            padding: 50px;
+            position: relative;
+        }
+
+        /* --- ADVANCED SPLIT COGNITIVE ARCHITECTURE --- */
+        .split-dashboard {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 30px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.11);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            padding: 35px;
+            border-radius: 28px;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* High-Transparency Cute Critter Background Watermarks */
+        #overviewCard::before { content: '🐼'; position: absolute; font-size: 100px; bottom: -10px; right: 15px; opacity: 0.04; pointer-events: none; }
+        #matchmakerCard::before { content: '🐱'; position: absolute; font-size: 130px; bottom: -30px; right: -10px; opacity: 0.04; pointer-events: none; }
+        #activeLobbiesCard::before { content: '🦄'; position: absolute; font-size: 140px; bottom: -40px; right: -10px; opacity: 0.04; pointer-events: none; }
+
+        h2 {
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        h2 i {
+            color: #ff9f43;
+        }
+
+        /* --- OVERVIEW GRID --- */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-box {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 20px;
+            border-radius: 18px;
+            text-align: center;
+        }
+
+        .stat-box h3 {
+            font-size: 12px;
+            color: rgba(255,255,255,0.7);
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-box h1 {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ff7ebb, #ff9f43);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* --- PARTNER MATCH CARDS --- */
+        .student-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .student-card {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 22px;
+            border-radius: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
+        }
+
+        .student-card:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .student-identity {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .avatar {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .student-info h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .compatibility-badge {
+            font-size: 11px;
+            font-weight: 700;
+            background: rgba(34, 197, 94, 0.2);
+            color: #4ade80;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            padding: 4px 10px;
+            border-radius: 10px;
+            display: inline-block;
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .tags {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .tag {
+            background: rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            color: rgba(255,255,255,0.85);
+            font-weight: 500;
+        }
+
+        /* --- ACTIVE LOBBY CARDS --- */
+        .group-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+        }
+
+        .group-card {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 22px;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.25s, background 0.25s;
+        }
+
+        .group-card:hover {
+            transform: translateY(-4px);
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .group-card h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 4px;
+        }
+
+        .group-card p {
+            font-size: 12px;
+            color: rgba(255,255,255,0.65);
+            line-height: 1.4;
+        }
+
+        .group-metrics {
+            margin-top: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .xp-value {
+            font-size: 12px;
+            font-weight: 700;
+            color: #ff9f43;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .rank-value {
+            font-size: 12px;
+            font-weight: 700;
+            color: #4ade80;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* --- GLASS INPUT NODES --- */
+        input[type="text"] {
+            width: 100%;
+            padding: 14px 18px;
+            border: 1px solid rgba(255,255,255,0.15);
+            outline: none;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.12);
+            color: white;
+            font-size: 14px;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+        }
+
+        input::placeholder {
+            color: rgba(255,255,255,0.5);
+        }
+
+        input:focus {
+            border-color: #ff9f43;
+            background: rgba(255,255,255,0.2);
+            box-shadow: 0 0 12px rgba(255, 159, 67, 0.35);
+        }
+
+        /* Standardized Actions Buttons */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 14px;
+            background: var(--btn-grad);
+            color: white;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 6px 18px rgba(219, 39, 119, 0.3);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 22px rgba(219, 39, 119, 0.5);
+        }
+
+        /* --- INTELLIGENT TELEMETRY INSIGHTS --- */
+        .insight-box {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 20px;
+            border-radius: 18px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: rgba(255,255,255,0.9);
+        }
+
+        .expected-gain {
+            margin-top: 15px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #4ade80;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* --- RESPONSIVE BRACKETS --- */
+        @media (max-width: 1150px) {
+            .split-dashboard { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 900px) {
+            .sidebar { display: none; }
+            .main { margin-left: 0; width: 100%; padding: 30px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="sidebar">
+        <div class="logo"><a href="index.html"><i class="fa-solid fa-gamepad"></i> LevelUp</a></div>
+        <div class="menu">
+            <a href="dashboard.html"><i class="fa-solid fa-house"></i> Dashboard</a>
+            <a href="notes.html"><i class="fa-solid fa-camera"></i> Quiz Generator</a>
+            <a href="flashcard.html"><i class="fa-solid fa-brain"></i> Flashcards</a>
+            <a href="analytics.html"><i class="fa-solid fa-chart-simple"></i> Analytics</a>
+            <a href="studygroup.html" class="active"><i class="fa-solid fa-users"></i> Study Lobbies</a>
+            <a href="doubts.html"><i class="fa-solid fa-circle-question"></i> Doubt Core</a>
+            <a href="leaderboard.html"><i class="fa-solid fa-ranking-star"></i> Leaderboard</a>
+            <a href="planner.html"><i class="fa-solid fa-calendar-days"></i> Planner</a>
+            <a href="profile.html"><i class="fa-solid fa-user-gear"></i> Profile</a>
+        </div>
+    </nav>
+
+    <main class="main">
+        <div class="split-dashboard">
+            
+            <div class="left-pane">
+                
+                <section class="card" id="matchmakerCard">
+                    <h2><i class="fa-solid fa-user-astronaut"></i> AI Recommended Study Partners</h2>
+                    <div class="student-grid">
+                        
+                        <div class="student-card">
+                            <div class="student-identity">
+                                <div class="avatar">🧑‍💻</div>
+                                <div class="student-info">
+                                    <h3>Rahul</h3>
+                                    <div class="compatibility-badge">95% Match Scale</div>
+                                    <div class="tags">
+                                        <div class="tag">Strong in DSA</div>
+                                        <div class="tag">Needs DBMS Architecture</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="btn">Transmit Invite <i class="fa-solid fa-paper-plane"></i></button>
+                        </div>
+
+                        <div class="student-card">
+                            <div class="student-identity">
+                                <div class="avatar">👩‍💻</div>
+                                <div class="student-info">
+                                    <h3>Sneha</h3>
+                                    <div class="compatibility-badge">91% Match Scale</div>
+                                    <div class="tags">
+                                        <div class="tag">Strong in ML Models</div>
+                                        <div class="tag">Needs DSA Logic Maps</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="btn">Transmit Invite <i class="fa-solid fa-paper-plane"></i></button>
+                        </div>
+
+                        <div class="student-card">
+                            <div class="student-identity">
+                                <div class="avatar">🚀</div>
+                                <div class="student-info">
+                                    <h3>Arjun</h3>
+                                    <div class="compatibility-badge">89% Match Scale</div>
+                                    <div class="tags">
+                                        <div class="tag">Strong in DBMS Engine</div>
+                                        <div class="tag">Needs Deep Analytics</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="btn">Transmit Invite <i class="fa-solid fa-paper-plane"></i></button>
+                        </div>
+
+                    </div>
+                </section>
+
+                <section class="card" id="activeLobbiesCard">
+                    <h2><i class="fa-solid fa-network-wired"></i> Active Study Lobbies</h2>
+                    <div class="group-grid">
+                        
+                        <div class="group-card">
+                            <div>
+                                <h3>AI Masters</h3>
+                                <p>Core Target Focus: Artificial Intelligence Pipelines & Neural Maps</p>
+                            </div>
+                            <div>
+                                <div class="group-metrics">
+                                    <div class="xp-value"><i class="fa-solid fa-bolt"></i> 4,500 Pool XP</div>
+                                    <div class="rank-value"><i class="fa-solid fa-trophy"></i> Server Rank #2</div>
+                                </div>
+                                <button class="btn" style="width: 100%;">Connect Session</button>
+                            </div>
+                        </div>
+
+                        <div class="group-card">
+                            <div>
+                                <h3>DSA Warriors</h3>
+                                <p>Core Target Focus: Algorithmic Engineering & Leetcode Matches</p>
+                            </div>
+                            <div>
+                                <div class="group-metrics">
+                                    <div class="xp-value"><i class="fa-solid fa-bolt"></i> 5,100 Pool XP</div>
+                                    <div class="rank-value"><i class="fa-solid fa-trophy"></i> Server Rank #1</div>
+                                </div>
+                                <button class="btn" style="width: 100%;">Connect Session</button>
+                            </div>
+                        </div>
+
+                        <div class="group-card">
+                            <div>
+                                <h3>DBMS Legends</h3>
+                                <p>Core Target Focus: Relational Schematics & Query Tuning</p>
+                            </div>
+                            <div>
+                                <div class="group-metrics">
+                                    <div class="xp-value"><i class="fa-solid fa-bolt"></i> 3,800 Pool XP</div>
+                                    <div class="rank-value"><i class="fa-solid fa-trophy"></i> Server Rank #4</div>
+                                </div>
+                                <button class="btn" style="width: 100%;">Connect Session</button>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+            </div>
+
+            <div class="right-pane">
+                
+                <section class="card" id="overviewCard">
+                    <h2><i class="fa-solid fa-chart-pie"></i> Lobby Telemetry</h2>
+                    <div class="stats-grid">
+                        <div class="stat-box"><h3>Lobbies Joined</h3><h1>4</h1></div>
+                        <div class="stat-box"><h3>Sync Hours</h3><h1>58 Hr</h1></div>
+                        <div class="stat-box"><h3>Squad XP</h3><h1>12.4K</h1></div>
+                        <div class="stat-box"><h3>Server Rank</h3><h1>#8</h1></div>
+                    </div>
+                </section>
+
+                <section class="card">
+                    <h2><i class="fa-solid fa-brain"></i> Matchmaking Analytics</h2>
+                    <div class="insight-box">
+                        <p>Based on your current performance analytics across active quiz campaigns, the system recommends grouping up with players who display high mastery marks within DBMS architecture and Data Structures to systematically patch critical tracking gaps.</p>
+                        <div class="expected-gain">
+                            <i class="fa-solid fa-chart-line"></i> Anticipated Proficiency Acceleration: <strong>+18% Velocity</strong>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="card">
+                    <h2><i class="fa-solid fa-circle-plus"></i> Initialize New Lobby</h2>
+                    <div class="form-container">
+                        <input type="text" placeholder="Study Lobby Target Name" id="groupNameIn">
+                        <input type="text" placeholder="Academic Course Core Focus" id="groupSubjectIn">
+                        <button class="btn" id="createGroup" style="width: 100%; justify-content: center;">
+                            Deploy Active Squad Lobby <i class="fa-solid fa-plus"></i>
+                        </button>
+                    </div>
+                </section>
+
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // MOCK LOBBY DEPLOY INTERACTIVE SUITE ACTIONS
+        document.getElementById("createGroup").addEventListener("click", () => {
+            const nameNode = document.getElementById("groupNameIn").value;
+            if (nameNode.trim() === "") {
+                alert("Please input a valid structural lobby tag name.");
+                return;
+            }
+            alert("LevelUp System: Synced Study Lobby Loop [" + nameNode + "] initiated cleanly into server databases!");
+            document.getElementById("groupNameIn").value = "";
+            document.getElementById("groupSubjectIn").value = "";
+        });
+    </script>
+</body>
+</html>

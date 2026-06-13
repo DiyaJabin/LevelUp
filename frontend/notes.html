@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LevelUp AI - Quiz Generator Terminal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            /* High-Vibrancy Sunset Dreamy Palette */
+            --bg-gradient: linear-gradient(135deg, #1e1b4b 0%, #4c1d95 20%, #831843 45%, #db2777 70%, #f97316 90%, #ffedd5 100%);
+            --text-dark: #1e293b;
+            --text-light: #ffffff;
+            --primary-grad: linear-gradient(135deg, #ff7ebb, #ff9f43);
+            --btn-grad: linear-gradient(90deg, #ff7ebb, #f97316);
+            --glass-bg: rgba(255, 255, 255, 0.11);
+            --glass-border: rgba(255, 255, 255, 0.22);
+            --shadow-sm: 0 8px 32px rgba(49, 16, 66, 0.2);
+            --shadow-md: 0 16px 32px rgba(219, 39, 119, 0.25);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            color: var(--text-light);
+            min-height: 100vh;
+            display: flex;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* --- UNIFORM CORE SIDEBAR NAVIGATION --- */
+        .sidebar {
+            width: 280px;
+            background: rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border-right: 1px solid var(--glass-border);
+            padding: 30px 20px;
+            position: fixed;
+            height: 100%;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo {
+            font-size: 26px;
+            font-weight: 800;
+            margin-bottom: 35px;
+            padding-left: 15px;
+        }
+
+        .logo a {
+            color: var(--text-light);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo i {
+            color: #ff7ebb;
+            filter: drop-shadow(0 0 8px #ff7ebb);
+        }
+
+        .menu {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            overflow-y: auto;
+        }
+
+        .menu a {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            text-decoration: none;
+            color: rgba(255, 255, 255, 0.75);
+            padding: 12px 20px;
+            border-radius: 16px;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.25s ease;
+            border: 1px solid transparent;
+        }
+
+        .menu a:hover, .menu a.active {
+            background: rgba(255, 255, 255, 0.15);
+            color: var(--text-light);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateX(4px);
+        }
+
+        .menu a.active i {
+            color: #ff7ebb;
+        }
+
+        /* --- DISPLAY LAYOUT CONSOLE --- */
+        .main {
+            margin-left: 280px;
+            width: calc(100% - 280px);
+            padding: 50px;
+            position: relative;
+        }
+
+        /* --- ADVANCED MULTI-PANE SPLIT LAYOUT --- */
+        .split-dashboard {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 30px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.11);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            padding: 35px;
+            border-radius: 28px;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* High-Transparency Cute Critter Background Watermarks */
+        #uploadCard::before { content: '🐱'; position: absolute; font-size: 110px; bottom: -20px; right: -10px; opacity: 0.04; pointer-events: none; }
+        #configCard::before { content: '🐼'; position: absolute; font-size: 100px; top: -10px; right: 15px; opacity: 0.03; pointer-events: none; }
+        #quizSection::before { content: '🦄'; position: absolute; font-size: 150px; bottom: -30px; right: -20px; opacity: 0.04; pointer-events: none; }
+
+        h2 {
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        h2 i {
+            color: #ff9f43;
+        }
+
+        /* --- DRAG & DROP UPLOAD SCANNERS --- */
+        .upload-box {
+            border: 2px dashed rgba(255, 255, 255, 0.4);
+            padding: 40px;
+            border-radius: 22px;
+            text-align: center;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.04);
+            display: block;
+            transition: all 0.3s ease;
+        }
+
+        .upload-box:hover {
+            border-color: #ff7ebb;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .upload-box input {
+            display: none;
+        }
+
+        .upload-box i {
+            font-size: 38px;
+            color: #ff7ebb;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .preview {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .preview img {
+            max-width: 100%;
+            border-radius: 18px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--glass-border);
+        }
+
+        /* --- CONTROL PACK GRID FILTERS --- */
+        .control-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 20px;
+        }
+
+        .control-node {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-node label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.7);
+            letter-spacing: 0.5px;
+        }
+
+        select {
+            width: 100%;
+            padding: 14px 18px;
+            border: 1px solid rgba(255,255,255,0.15);
+            outline: none;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.12);
+            color: white;
+            font-size: 14px;
+        }
+
+        select option {
+            background: #25183a;
+            color: white;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 16px;
+            background: var(--btn-grad);
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            box-shadow: 0 6px 16px rgba(219, 39, 119, 0.35);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 22px rgba(219, 39, 119, 0.55);
+        }
+
+        .generate-btn {
+            width: 100%;
+            margin-top: 25px;
+        }
+
+        /* --- TOPICS MASTER BRACKET --- */
+        .topic-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px;
+        }
+
+        .topic {
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 12px;
+            border-radius: 14px;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.9);
+        }
+
+        /* --- ACTIVE CONSOLE QUIZ ARENA --- */
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 700;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .progress {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #ff7ebb, #f97316);
+            box-shadow: 0 0 10px #ff7ebb;
+            transition: width 0.4s ease;
+        }
+
+        .question {
+            font-size: 18px;
+            margin-bottom: 25px;
+            font-weight: 700;
+            line-height: 1.5;
+        }
+
+        .options {
+            display: grid;
+            gap: 12px;
+        }
+
+        .option {
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 16px 20px;
+            border-radius: 16px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .option:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255,255,255,0.25);
+        }
+
+        .correct {
+            background: rgba(34, 197, 94, 0.3) !important;
+            border-color: #4ade80 !important;
+            color: #4ade80;
+            font-weight: 700;
+        }
+
+        .wrong {
+            background: rgba(239, 68, 68, 0.3) !important;
+            border-color: #f87171 !important;
+            color: #f87171;
+            font-weight: 700;
+        }
+
+        /* --- STATS NODES --- */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 20px;
+        }
+
+        .stat {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 20px;
+            border-radius: 18px;
+            text-align: center;
+        }
+
+        .stat h3 {
+            font-size: 12px;
+            color: rgba(255,255,255,0.7);
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .stat h1 {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ff7ebb, #ff9f43);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* --- BADGES REWARD RACKS --- */
+        .badges {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+            gap: 15px;
+        }
+
+        .badge {
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 16px 10px;
+            border-radius: 18px;
+            text-align: center;
+            font-size: 32px;
+        }
+
+        .badge p {
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 8px;
+            color: rgba(255,255,255,0.85);
+        }
+
+        /* --- REWARD MODAL COMPONENT --- */
+        .reward-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 10, 30, 0.75);
+            backdrop-filter: blur(15px);
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+        }
+
+        .reward-content {
+            background: linear-gradient(135deg, #2e1046 0%, #1e1b4b 100%);
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 40px;
+            border-radius: 30px;
+            text-align: center;
+            width: 90%;
+            max-width: 460px;
+            box-shadow: var(--shadow-md);
+        }
+
+        .reward-content h1 {
+            color: #ff9f43;
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 12px;
+        }
+
+        /* --- DYNAMIC SLIDE TOAST ACHIEVEMENT --- */
+        .achievement {
+            position: fixed;
+            top: 30px;
+            right: -450px;
+            background: linear-gradient(90deg, #22c55e, #10b981);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 16px 28px;
+            border-radius: 16px;
+            font-weight: 700;
+            font-size: 14px;
+            box-shadow: var(--shadow-md);
+            transition: right 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 1000;
+        }
+
+        /* --- HISTORICAL RECORDS LOGS --- */
+        .history-item {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 14px 20px;
+            border-radius: 14px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        @media (max-width: 1100px) {
+            .split-dashboard { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 900px) {
+            .sidebar { display: none; }
+            .main { margin-left: 0; width: 100%; padding: 30px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="achievement" id="achievement">
+        <i class="fa-solid fa-trophy"></i> Profile Badge Unlocked: Quiz Master
+    </div>
+
+    <nav class="sidebar">
+        <div class="logo"><a href="index.html"><i class="fa-solid fa-gamepad"></i> LevelUp</a></div>
+        <div class="menu">
+            <a href="dashboard.html"><i class="fa-solid fa-house"></i> Dashboard</a>
+            <a href="notes.html" class="active"><i class="fa-solid fa-camera"></i> Quiz Generator</a>
+            <a href="flashcard.html"><i class="fa-solid fa-brain"></i> Flashcards</a>
+            <a href="analytics.html"><i class="fa-solid fa-chart-simple"></i> Analytics</a>
+            <a href="studygroup.html"><i class="fa-solid fa-users"></i> Study Lobbies</a>
+            <a href="doubts.html"><i class="fa-solid fa-circle-question"></i> Doubt Core</a>
+            <a href="leaderboard.html"><i class="fa-solid fa-ranking-star"></i> Leaderboard</a>
+            <a href="planner.html"><i class="fa-solid fa-calendar-days"></i> Planner</a>
+            <a href="profile.html"><i class="fa-solid fa-user-gear"></i> Profile</a>
+        </div>
+    </nav>
+
+    <main class="main">
+        <div class="split-dashboard">
+            
+            <div class="left-pane">
+                
+                <section class="card" id="uploadCard">
+                    <h2><i class="fa-solid fa-camera"></i> Scan Material</h2>
+                    <label class="upload-box">
+                        <input type="file" id="fileInput" accept=".jpg,.jpeg,.png,.pdf">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <h3>Deploy Study Records</h3>
+                        <p style="font-size: 13px; opacity: 0.7; margin-top: 4px;">Supports handwritten captures, snapshots or raw PDFs</p>
+                    </label>
+                    <div class="preview" id="preview"></div>
+                </section>
+
+                <section class="card" id="quizSection" style="display:none;">
+                    <div class="quiz-header">
+                        <div>Quest Node: <span id="currentQuestion">1</span> / <span id="totalQuestions">5</span></div>
+                        <div style="color: #ff9f43;"><i class="fa-solid fa-bolt"></i> Score: <span id="score">0</span></div>
+                    </div>
+                    
+                    <div class="progress-container"><div class="progress" id="quizProgress"></div></div>
+                    <div class="question" id="questionText">Processing question parameters...</div>
+                    <div class="options" id="optionsContainer"></div>
+                    
+                    <button class="btn" id="nextBtn" style="margin-top: 25px; width: 100%;">Next Quest Node →</button>
+                </section>
+
+                <section class="card">
+                    <h2><i class="fa-solid fa-clock-rotate-left"></i> Historic Campaign Log</h2>
+                    <div id="historyContainer">
+                        <div class="history-item"><span>Machine Learning Core Quiz</span><span style="color: #4ade80;">82%</span></div>
+                        <div class="history-item"><span>DBMS Structural Quiz</span><span style="color: #4ade80;">91%</span></div>
+                        <div class="history-item"><span>DSA Recursion Quiz</span><span style="color: #ff7ebb;">77%</span></div>
+                    </div>
+                </section>
+
+            </div>
+
+            <div class="right-pane">
+                
+                <section class="card" id="configCard">
+                    <h2><i class="fa-solid fa-sliders"></i> Configuration Suite</h2>
+                    <div class="control-grid">
+                        <div class="control-node">
+                            <label>Difficulty Tier</label>
+                            <select id="difficulty"><option>Easy</option><option selected>Medium</option><option>Hard</option></select>
+                        </div>
+                        <div class="control-node">
+                            <label>Quest Mode</label>
+                            <select id="quizType"><option>MCQ Arena</option><option>True / False Match</option></select>
+                        </div>
+                        <div class="control-node">
+                            <label>Card Limit</label>
+                            <select id="questionCount"><option>5</option><option>10</option><option>15</option></select>
+                        </div>
+                    </div>
+                    <button class="btn generate-btn" id="generateBtn">Compile Active Arena <i class="fa-solid fa-wand-magic-sparkles"></i></button>
+                </section>
+
+                <section class="card">
+                    <h2><i class="fa-solid fa-tags"></i> Parsed Core Anchors</h2>
+                    <div class="topic-grid">
+                        <div class="topic">Machine Learning</div>
+                        <div class="topic">Neural Networks</div>
+                        <div class="topic">Regression Maps</div>
+                        <div class="topic">Classification</div>
+                        <div class="topic">Deep Learning</div>
+                        <div class="topic">Model Evaluation</div>
+                    </div>
+                </section>
+
+                <section class="card" id="analyticsCard" style="display:none;">
+                    <h2><i class="fa-solid fa-chart-pie"></i> Session Analytics</h2>
+                    <div class="stats">
+                        <div class="stat"><h3>Accuracy</h3><h1 id="accuracyValue">0%</h1></div>
+                        <div class="stat"><h3>XP Multiplied</h3><h1 id="xpValue">0</h1></div>
+                        <div class="stat"><h3>Correct Nodes</h3><h1 id="correctValue">0</h1></div>
+                        <div class="stat"><h3>Performance</h3><h1 id="performanceValue">-</h1></div>
+                    </div>
+                </section>
+
+                <section class="card" id="badgeSection" style="display:none;">
+                    <h2><i class="fa-solid fa-medal"></i> Trophy Brackets</h2>
+                    <div class="badges">
+                        <div class="badge">🏆<p>Quiz Master</p></div>
+                        <div class="badge">🔥<p>Streak Multiplier</p></div>
+                        <div class="badge">⭐<p>Rapid Recall</p></div>
+                        <div class="badge">🚀<p>Knowledge Boost</p></div>
+                    </div>
+                </section>
+
+            </div>
+        </div>
+    </main>
+
+    <div class="reward-modal" id="rewardModal">
+        <div class="reward-content">
+            <h1>🎉 Campaign Concluded</h1>
+            <p>Your session telemetry successfully recorded into database profiles.</p>
+            <br>
+            <h2 style="color: #4ade80;"><i class="fa-solid fa-circle-plus"></i> 250 Base XP Secured</h2>
+            <br>
+            <button class="btn" id="closeReward" style="width: 100%;">Return to Console</button>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const fileInput = document.getElementById("fileInput");
+        const preview = document.getElementById("preview");
+        const generateBtn = document.getElementById("generateBtn");
+        const quizSection = document.getElementById("quizSection");
+        const questionText = document.getElementById("questionText");
+        const optionsContainer = document.getElementById("optionsContainer");
+        const currentQuestionEl = document.getElementById("currentQuestion");
+        const totalQuestionsEl = document.getElementById("totalQuestions");
+        const scoreEl = document.getElementById("score");
+        const nextBtn = document.getElementById("nextBtn");
+        const quizProgress = document.getElementById("quizProgress");
+        const analyticsCard = document.getElementById("analyticsCard");
+        const badgeSection = document.getElementById("badgeSection");
+        const rewardModal = document.getElementById("rewardModal");
+        const closeReward = document.getElementById("closeReward");
+        const achievement = document.getElementById("achievement");
+
+        fileInput.addEventListener("change", () => {
+            preview.innerHTML = "";
+            const file = fileInput.files[0];
+            if (!file) return;
+            if (file.type.startsWith("image/")) {
+                const reader = new FileReader();
+                reader.onload = (e) => { preview.innerHTML = `<img src="${e.target.result}">`; };
+                reader.readAsDataURL(file);
+            } else {
+                preview.innerHTML = `<div style="padding:20px; background:rgba(255,255,255,0.06); border:1px solid var(--glass-border); border-radius:14px; font-size:13px; font-weight:600;"><i class="fa-regular fa-file-pdf" style="color:#ff7ebb;"></i> Verified Asset: ${file.name}</div>`;
+            }
+        });
+
+        const quizQuestions = [
+            { question: "What is Machine Learning?", options: ["A subset of AI", "A relational database matrix", "A peripheral server interface infrastructure", "A standalone compiler application"], answer: 0 },
+            { question: "Which algorithm operates specifically as a classification methodology?", options: ["Linear Regression Curves", "Logistic Regression Frameworks", "K-Means Aggregation Clustering", "Apriori Association Maps"], answer: 1 },
+            { question: "What represents the complete translation signature of AI?", options: ["Artificial Intelligence", "Automated Internet", "Advanced Integration", "Artificial Interface"], answer: 0 },
+            { question: "Identify the verified supervised learning architecture algorithm loop:", options: ["K-Means Matrix", "DBSCAN Cluster Array", "Linear Regression Framework", "Principal Component Isolation (PCA)"], answer: 2 },
+            { question: "Artificial Neural Networks map conceptual architectural inspirations from?", options: ["Decision Tree Splits", "Relational Database Tables", "Human Brain Biological Structures", "Operating System Kernels"], answer: 2 }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let answered = false;
+
+        generateBtn.addEventListener("click", () => {
+            if (!fileInput.files.length) {
+                alert("Please attach asset documentation or image scans to continue.");
+                return;
+            }
+            quizSection.style.display = "block";
+            currentQuestion = 0;
+            score = 0;
+            scoreEl.innerText = score;
+            const count = parseInt(document.getElementById("questionCount").value);
+            totalQuestionsEl.innerText = count;
+            loadQuestion();
+            window.scrollTo({ top: quizSection.offsetTop - 40, behavior: "smooth" });
+        });
+
+        function loadQuestion() {
+            answered = false;
+            const count = parseInt(document.getElementById("questionCount").value);
+            const q = quizQuestions[currentQuestion % quizQuestions.length];
+            questionText.innerText = q.question;
+            optionsContainer.innerHTML = "";
+            currentQuestionEl.innerText = currentQuestion + 1;
+            quizProgress.style.width = ((currentQuestion + 1) / count) * 100 + "%";
+
+            q.options.forEach((option, index) => {
+                const div = document.createElement("div");
+                div.classList.add("option");
+                div.innerText = option;
+                div.addEventListener("click", () => {
+                    if (answered) return;
+                    answered = true;
+                    if (index === q.answer) {
+                        div.classList.add("correct");
+                        score++;
+                        scoreEl.innerText = score;
+                    } else {
+                        div.classList.add("wrong");
+                    }
+                });
+                optionsContainer.appendChild(div);
+            });
+        }
+
+        nextBtn.addEventListener("click", () => {
+            if (!answered) {
+                alert("Please declare a response choice to clear the verification node.");
+                return;
+            }
+            const count = parseInt(document.getElementById("questionCount").value);
+            currentQuestion++;
+            if (currentQuestion < count) {
+                loadQuestion();
+            } else {
+                finishQuiz();
+            }
+        });
+
+        function finishQuiz() {
+            const count = parseInt(document.getElementById("questionCount").value);
+            const accuracy = Math.round((score / count) * 100);
+            let performance = "Needs Revision";
+            if (accuracy >= 90) performance = "Elite Bracket";
+            else if (accuracy >= 70) performance = "Master Tier";
+            else if (accuracy >= 50) performance = "Provisional Tier";
+
+            document.getElementById("accuracyValue").innerText = accuracy + "%";
+            document.getElementById("correctValue").innerText = score;
+            document.getElementById("performanceValue").innerText = performance;
+            document.getElementById("xpValue").innerText = score * 50;
+
+            analyticsCard.style.display = "block";
+            badgeSection.style.display = "block";
+            rewardModal.style.display = "flex";
+            achievement.style.right = "30px";
+
+            setTimeout(() => { achievement.style.right = "-450px"; }, 4000);
+
+            quizSection.innerHTML = `
+                <h2><i class="fa-solid fa-square-poll-vertical"></i> Quest Arena Concluded</h2>
+                <br><h1>Final Telemetry Score: ${score}/${count}</h1><br>
+                <p>Accuracy Target Cleared: <strong>${accuracy}%</strong></p><br>
+                <button class="btn" style="width:100%;" onclick="downloadResults()"><i class="fa-solid fa-file-arrow-down"></i> Export Telemetry Report</button>
+            `;
+        }
+
+        window.downloadResults = function() {
+            const accuracy = document.getElementById("accuracyValue").innerText;
+            const text = `LEVELUP AI - INSTANT RUN ANALYSIS EVALUATION\nAccuracy Secured: ${accuracy}\nTimestamp Sync: 2026\nSystem Framework Status: Confirmed`;
+            const blob = new Blob([text], { type: "text/plain" });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "LevelUp_Telemetry_Report.txt";
+            a.click();
+        };
+
+        closeReward.addEventListener("click", () => { rewardModal.style.display = "none"; });
+    });
+    </script>
+</body>
+</html>

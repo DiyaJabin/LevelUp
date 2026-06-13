@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LevelUp AI - Player Profile Terminal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            /* Vibrant Sunset Dreamy Gradient: Deep twilight blue merging into rich pinks, magentas, and soft golden oranges */
+            --bg-gradient: linear-gradient(135deg, #1e1b4b 0%, #4c1d95 20%, #831843 45%, #db2777 70%, #f97316 90%, #ffedd5 100%);
+            --text-dark: #1e293b;
+            --text-light: #ffffff;
+            --primary-grad: linear-gradient(135deg, #ff7ebb, #ff9f43);
+            --btn-grad: linear-gradient(90deg, #ff7ebb, #f97316);
+            --glass-bg: rgba(255, 255, 255, 0.11);
+            --glass-border: rgba(255, 255, 255, 0.22);
+            --shadow-sm: 0 8px 32px rgba(49, 16, 66, 0.2);
+            --shadow-md: 0 16px 32px rgba(219, 39, 119, 0.25);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            color: var(--text-light);
+            min-height: 100vh;
+            display: flex;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* --- SIDEBAR NAVIGATION --- */
+        .sidebar {
+            width: 280px;
+            background: rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border-right: 1px solid var(--glass-border);
+            padding: 30px 20px;
+            position: fixed;
+            height: 100%;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo {
+            font-size: 26px;
+            font-weight: 800;
+            margin-bottom: 40px;
+            padding-left: 15px;
+        }
+
+        .logo a {
+            color: var(--text-light);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo i {
+            color: #ff7ebb;
+            filter: drop-shadow(0 0 8px #ff7ebb);
+        }
+
+        .menu {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            overflow-y: auto;
+        }
+
+        .menu a {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            text-decoration: none;
+            color: rgba(255, 255, 255, 0.75);
+            padding: 14px 20px;
+            border-radius: 16px;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.25s ease;
+            border: 1px solid transparent;
+        }
+
+        .menu a:hover, .menu a.active {
+            background: rgba(255, 255, 255, 0.15);
+            color: var(--text-light);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateX(4px);
+        }
+
+        .menu a.active i {
+            color: #ff7ebb;
+        }
+
+        /* --- MAIN CONSOLE FRAME --- */
+        .main {
+            margin-left: 280px;
+            width: calc(100% - 280px);
+            padding: 50px;
+            position: relative;
+        }
+
+        /* --- PREMIUM SPACING PLATFORM CARDS --- */
+        .card {
+            background: rgba(255, 255, 255, 0.11);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            padding: 35px;
+            border-radius: 28px;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 35px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* High Transparency Cute Floating Elements Background Injectors */
+        .card::before {
+            position: absolute;
+            font-size: 100px;
+            bottom: -20px;
+            right: -10px;
+            opacity: 0.05;
+            pointer-events: none;
+        }
+        #statsCard::before { content: '🐼'; font-size: 95px; bottom: -10px; right: 15px; }
+        #subjectCard::before { content: '🐱'; font-size: 110px; }
+        #badgeCard::before { content: '🦄'; font-size: 120px; bottom: -30px; }
+
+        /* --- MOTIVATIONAL BLOCK ELEMENT --- */
+        .quote-banner {
+            background: linear-gradient(135deg, rgba(255, 126, 187, 0.2) 0%, rgba(249, 115, 22, 0.2) 100%);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 24px;
+            padding: 25px 30px;
+            margin-bottom: 35px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .quote-banner i {
+            font-size: 28px;
+            color: #ff9f43;
+            filter: drop-shadow(0 0 6px #ff9f43);
+        }
+
+        .quote-banner p {
+            font-size: 14px;
+            font-weight: 500;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.95);
+            font-style: italic;
+        }
+
+        h2 {
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        h2 i {
+            color: #ff9f43;
+        }
+
+        /* --- USER IDENTITY PROFILE BLOCK --- */
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 35px;
+            flex-wrap: wrap;
+        }
+
+        .avatar {
+            width: 125px;
+            height: 125px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            border: 3px solid rgba(255, 255, 255, 0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 55px;
+            box-shadow: var(--shadow-md);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .avatar:hover {
+            transform: scale(1.06) rotate(5deg);
+        }
+
+        .profile-info-block h1 {
+            font-size: 32px;
+            font-weight: 800;
+            margin-bottom: 4px;
+            text-shadow: 0 2px 12px rgba(0,0,0,0.15);
+        }
+
+        .profile-info-block p {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .level-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, #ff9f43, #f97316);
+            padding: 6px 18px;
+            border-radius: 20px;
+            margin-top: 14px;
+            color: white;
+            font-weight: 700;
+            font-size: 13px;
+            box-shadow: 0 4px 15px rgba(249, 115, 22, 0.3);
+        }
+
+        .xp-text-tracker {
+            margin-top: 18px;
+            font-size: 13px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.9);
+        }
+
+        .progress-box {
+            background: rgba(255, 255, 255, 0.15);
+            height: 12px;
+            border-radius: 20px;
+            overflow: hidden;
+            margin-top: 10px;
+            width: 320px;
+            max-width: 100%;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .progress {
+            height: 100%;
+            width: 75%;
+            background: linear-gradient(90deg, #ff7ebb, #f97316);
+            box-shadow: 0 0 10px #ff7ebb;
+            border-radius: 20px;
+        }
+
+        /* --- STATS GRID --- */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 25px;
+        }
+
+        .stat-node {
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 25px;
+            border-radius: 22px;
+            text-align: center;
+            transition: transform 0.25s;
+        }
+
+        .stat-node:hover {
+            transform: translateY(-4px);
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .stat-node h3 {
+            font-size: 13px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.7);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .stat-node h1 {
+            font-size: 32px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ff7ebb, #ff9f43);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* --- COURSE MODULE SECTIONS --- */
+        .subject-container {
+            margin-bottom: 18px;
+        }
+
+        .subject-container:last-child {
+            margin-bottom: 0;
+        }
+
+        .subject-info-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.9);
+        }
+
+        .subject-bar-track {
+            height: 10px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            overflow: hidden;
+            margin-top: 10px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .fill-meter {
+            height: 100%;
+            background: linear-gradient(90deg, #ff7ebb, #ff9f43);
+            border-radius: 20px;
+            box-shadow: 0 0 8px #ff7ebb;
+        }
+
+        /* --- TROPHY ARENA SYSTEM BADGES --- */
+        .badges-flex-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 20px;
+        }
+
+        .badge-capsule {
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 22px 15px;
+            border-radius: 22px;
+            text-align: center;
+            transition: transform 0.25s, background 0.25s;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .badge-capsule:hover {
+            transform: scale(1.05) translateY(-2px);
+            background: rgba(255, 255, 255, 0.14);
+        }
+
+        .badge-visual {
+            font-size: 36px;
+            margin-bottom: 12px;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+        }
+
+        .badge-capsule p {
+            font-size: 11px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.85);
+            line-height: 1.3;
+        }
+
+        /* --- SELECTOR INTERFACE AVATARS --- */
+        .avatar-selection-flex {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+            margin-bottom: 25px;
+        }
+
+        .avatar-node-option {
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.12);
+            border: 2px solid transparent;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 26px;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .avatar-node-option:hover {
+            transform: scale(1.1) translateY(-2px);
+            background: rgba(255, 255, 255, 0.22);
+        }
+
+        .avatar-node-option.active {
+            border-color: #ff9f43;
+            background: rgba(255, 255, 255, 0.25);
+            box-shadow: 0 0 12px rgba(249, 115, 22, 0.4);
+        }
+
+        .save-action-btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 14px;
+            background: var(--btn-grad);
+            color: white;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(249, 115, 22, 0.35);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .save-action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(249, 115, 22, 0.5);
+        }
+
+        /* --- HISTORICAL RECENT ACTIVITY TRACKER --- */
+        .timeline-row-item {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 16px 22px;
+            border-left: 4px solid #ff9f43;
+            margin-bottom: 12px;
+            border-radius: 4px 16px 16px 4px;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .timeline-row-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .timeline-row-item i {
+            font-size: 14px;
+            color: #ff7ebb;
+        }
+
+        /* --- RESPONSIVE BRACKETS --- */
+        @media (max-width: 900px) {
+            .sidebar { display: none; }
+            .main { margin-left: 0; width: 100%; padding: 30px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="sidebar">
+        <div class="logo">
+            <a href="index.html"><i class="fa-solid fa-gamepad"></i> LevelUp</a>
+        </div>
+        <div class="menu">
+            <a href="dashboard.html"><i class="fa-solid fa-house"></i> Dashboard</a>
+            <a href="notes.html"><i class="fa-solid fa-camera"></i> Quiz Generator</a>
+            <a href="flashcard.html"><i class="fa-solid fa-brain"></i> Flashcards</a>
+            <a href="analytics.html"><i class="fa-solid fa-chart-simple"></i> Analytics</a>
+            <a href="studygroup.html"><i class="fa-solid fa-users"></i> Study Lobbies</a>
+            <a href="doubts.html"><i class="fa-solid fa-circle-question"></i> Doubt Core</a>
+            <a href="leaderboard.html"><i class="fa-solid fa-ranking-star"></i> Leaderboard</a>
+            <a href="planner.html"><i class="fa-solid fa-calendar-days"></i> Planner</a>
+            <a href="profile.html" class="active"><i class="fa-solid fa-user-gear"></i> Profile</a>
+        </div>
+    </nav>
+
+    <main class="main">
+
+        <header class="quote-banner">
+            <i class="fa-solid fa-rocket"></i>
+            <p>"Every grand research breakthrough and successfully cleared exam begins exactly where you are right now—one focused session, one mastered concept, and one 'Level Up' at a time. Trust your grind, protect your streak, and watch how far you grow!"</p>
+        </header>
+
+        <section class="card">
+            <div class="profile-header">
+                <div class="avatar" id="mainAvatar">🚀</div>
+                <div class="profile-info-block">
+                    <h1>John Student</h1>
+                    <p>B.Tech Computer Science (AI & ML)</p>
+                    <div class="level-badge"><i class="fa-solid fa-shield-halved"></i> Tier Level 15</div>
+                    <div class="xp-text-tracker">7,500 / 10,000 Next Level XP</div>
+                    <div class="progress-box">
+                        <div class="progress"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="card" id="statsCard">
+            <h2><i class="fa-solid fa-chart-bar"></i> Performance Telemetry</h2>
+            <div class="stats-grid">
+                <div class="stat-node">
+                    <h3>Accumulated XP</h3>
+                    <h1>12,450</h1>
+                </div>
+                <div class="stat-node">
+                    <h3>Active Run Streak</h3>
+                    <h1>🔥 32 Days</h1>
+                </div>
+                <div class="stat-node">
+                    <h3>Quizzes Cleared</h3>
+                    <h1>128 Match</h1>
+                </div>
+                <div class="stat-node">
+                    <h3>Flashcard Iterations</h3>
+                    <h1>980 Card</h1>
+                </div>
+            </div>
+        </section>
+
+        <section class="card" id="subjectCard">
+            <h2><i class="fa-solid fa-graduation-cap"></i> Subject Mastery Nodes</h2>
+            
+            <div class="subject-container">
+                <div class="subject-info-title">Artificial Intelligence</div>
+                <div class="subject-bar-track"><div class="fill-meter" style="width:92%"></div></div>
+            </div>
+            <div class="subject-container">
+                <div class="subject-info-title">Machine Learning Foundations</div>
+                <div class="subject-bar-track"><div class="fill-meter" style="width:86%"></div></div>
+            </div>
+            <div class="subject-container">
+                <div class="subject-info-title">Database Management Systems</div>
+                <div class="subject-bar-track"><div class="fill-meter" style="width:74%"></div></div>
+            </div>
+            <div class="subject-container">
+                <div class="subject-info-title">Data Structures & Algorithms</div>
+                <div class="subject-bar-track"><div class="fill-meter" style="width:69%"></div></div>
+            </section>
+
+        <section class="card" id="badgeCard">
+            <h2><i class="fa-solid fa-award"></i> Trophies Obtained</h2>
+            <div class="badges-flex-grid">
+                <div class="badge-capsule">
+                    <div class="badge-visual">🏆</div>
+                    <p>Quiz Master</p>
+                </div>
+                <div class="badge-capsule">
+                    <div class="badge-visual">🔥</div>
+                    <p>30-Day Run</p>
+                </div>
+                <div class="badge-capsule">
+                    <div class="badge-visual">📚</div>
+                    <p>Fast Learner</p>
+                </div>
+                <div class="badge-capsule">
+                    <div class="badge-visual">⭐</div>
+                    <p>Top Performer</p>
+                </div>
+                <div class="badge-capsule">
+                    <div class="badge-visual">👥</div>
+                    <p>Squad Player</p>
+                </div>
+                <div class="badge-capsule">
+                    <div class="badge-visual">🚀</div>
+                    <p>Level Up</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2><i class="fa-solid fa-user-gear"></i> Avatar Customization</h2>
+            <div class="avatar-selection-flex">
+                <div class="avatar-node-option active">🚀</div>
+                <div class="avatar-node-option">🤖</div>
+                <div class="avatar-node-option">🧑‍💻</div>
+                <div class="avatar-node-option">🦸</div>
+                <div class="avatar-node-option">🐼</div>
+                <div class="avatar-node-option">🧙</div>
+            </div>
+            <button class="save-action-btn">Save Avatar Modifications</button>
+        </section>
+
+        <section class="card">
+            <h2><i class="fa-solid fa-clock-rotate-left"></i> Mission Event Log</h2>
+            <div class="timeline-row-item">
+                <i class="fa-solid fa-award"></i> Unlocked "Quiz Master" Achievement Trophy Bracket.
+            </div>
+            <div class="timeline-row-item">
+                <i class="fa-solid fa-book-open"></i> Reviewed 20 Machine Learning Spaced Repetition Flashcards.
+            </div>
+            <div class="timeline-row-item">
+                <i class="fa-solid fa-fire-flame-curved"></i> Extended Continuous Login Streak Matrix to 32 Days.
+            </div>
+            <div class="timeline-row-item">
+                <i class="fa-solid fa-users"></i> Authenticated Connection to AI Masters Study Team Lobby.
+            </div>
+            <div class="timeline-row-item">
+                <i class="fa-solid fa-chart-line"></i> Improved Machine Learning Problem Response Precision by 8%.
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // CLIENT INTERACTIVE AVATAR TRACKER ACTIONS
+        const avatars = document.querySelectorAll(".avatar-node-option");
+        const mainAvatar = document.getElementById("mainAvatar");
+
+        avatars.forEach(avatar => {
+            avatar.addEventListener("click", () => {
+                avatars.forEach(a => a.classList.remove("active"));
+                avatar.classList.add("active");
+                mainAvatar.innerText = avatar.innerText;
+            });
+        });
+    </script>
+</body>
+</html>

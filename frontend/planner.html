@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LevelUp AI - Campaign Planner Console</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            /* High-Vibrancy Sunset Dreamy Palette */
+            --bg-gradient: linear-gradient(135deg, #1e1b4b 0%, #4c1d95 20%, #831843 45%, #db2777 70%, #f97316 90%, #ffedd5 100%);
+            --text-dark: #1e293b;
+            --text-light: #ffffff;
+            --primary-grad: linear-gradient(135deg, #ff7ebb, #ff9f43);
+            --btn-grad: linear-gradient(90deg, #ff7ebb, #f97316);
+            --glass-bg: rgba(255, 255, 255, 0.11);
+            --glass-border: rgba(255, 255, 255, 0.22);
+            --shadow-sm: 0 8px 32px rgba(49, 16, 66, 0.2);
+            --shadow-md: 0 16px 32px rgba(219, 39, 119, 0.25);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            color: var(--text-light);
+            min-height: 100vh;
+            display: flex;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* --- UNIFORM CORE SIDEBAR NAVIGATION --- */
+        .sidebar {
+            width: 280px;
+            background: rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border-right: 1px solid var(--glass-border);
+            padding: 30px 20px;
+            position: fixed;
+            height: 100%;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo {
+            font-size: 26px;
+            font-weight: 800;
+            margin-bottom: 35px;
+            padding-left: 15px;
+        }
+
+        .logo a {
+            color: var(--text-light);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo i {
+            color: #ff7ebb;
+            filter: drop-shadow(0 0 8px #ff7ebb);
+        }
+
+        .menu {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            overflow-y: auto;
+        }
+
+        .menu a {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            text-decoration: none;
+            color: rgba(255, 255, 255, 0.75);
+            padding: 12px 20px;
+            border-radius: 16px;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.25s ease;
+            border: 1px solid transparent;
+        }
+
+        .menu a:hover, .menu a.active {
+            background: rgba(255, 255, 255, 0.15);
+            color: var(--text-light);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateX(4px);
+        }
+
+        .menu a.active i {
+            color: #ff7ebb;
+        }
+
+        /* --- MAIN DASHBOARD WINDOW --- */
+        .main {
+            margin-left: 280px;
+            width: calc(100% - 280px);
+            padding: 50px;
+            position: relative;
+        }
+
+        /* --- ADVANCED MULTI-PANE SPLIT GRID --- */
+        .split-dashboard {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 30px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.11);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            padding: 35px;
+            border-radius: 28px;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* High-Transparency Cute Critter Background Watermarks */
+        #examCard::before { content: '🚀'; position: absolute; font-size: 120px; bottom: -30px; right: -20px; opacity: 0.04; pointer-events: none; }
+        #planCard::before { content: '🐼'; position: absolute; font-size: 100px; bottom: -10px; right: 15px; opacity: 0.03; pointer-events: none; }
+        #timelineCard::before { content: '🦄'; position: absolute; font-size: 140px; bottom: -40px; right: -20px; opacity: 0.04; pointer-events: none; }
+        #reminderCard::before { content: '🐱'; position: absolute; font-size: 100px; bottom: -10px; right: 15px; opacity: 0.04; pointer-events: none; }
+
+        h2 {
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        h2 i {
+            color: #ff9f43;
+        }
+
+        /* --- EXAM CARDS GRID --- */
+        .exam-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+        }
+
+        .exam-card {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 22px;
+            border-radius: 20px;
+            transition: transform 0.25s, background 0.25s;
+        }
+
+        .exam-card:hover {
+            transform: translateY(-4px);
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255,255,255,0.2);
+        }
+
+        .exam-card h3 {
+            font-size: 15px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 4px;
+        }
+
+        .exam-card p {
+            font-size: 11px;
+            color: rgba(255,255,255,0.6);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .countdown {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ff7ebb, #ff9f43);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-top: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* --- GLASS INPUT NODES --- */
+        input[type="text"], input[type="date"] {
+            width: 100%;
+            padding: 14px 18px;
+            border: 1px solid rgba(255,255,255,0.15);
+            outline: none;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.12);
+            color: white;
+            font-size: 14px;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+        }
+
+        input::placeholder {
+            color: rgba(255,255,255,0.5);
+        }
+
+        input:focus {
+            border-color: #ff9f43;
+            background: rgba(255,255,255,0.2);
+            box-shadow: 0 0 12px rgba(255, 159, 67, 0.35);
+        }
+
+        /* Standardized Form Actions */
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 14px;
+            background: var(--btn-grad);
+            color: white;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 6px 18px rgba(219, 39, 119, 0.3);
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 22px rgba(219, 39, 119, 0.5);
+        }
+
+        /* --- AI QUEST TASKS --- */
+        .task {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 16px 20px;
+            border-radius: 16px;
+            margin-bottom: 12px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .task:last-child {
+            margin-bottom: 0;
+        }
+
+        .task span:first-child {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-badge {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 5px 12px;
+            border-radius: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .completed {
+            background: rgba(34, 197, 94, 0.2);
+            color: #4ade80;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .pending {
+            background: rgba(251, 191, 36, 0.2);
+            color: #fbbf24;
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+
+        /* --- PROGRESS SECTION --- */
+        .progress-box {
+            background: rgba(255, 255, 255, 0.15);
+            height: 12px;
+            border-radius: 20px;
+            overflow: hidden;
+            margin-top: 12px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .progress {
+            width: 72%;
+            height: 100%;
+            background: linear-gradient(90deg, #ff7ebb, #f97316);
+            box-shadow: 0 0 10px #ff7ebb;
+            border-radius: 20px;
+        }
+
+        /* --- TIMELINE STRATEGY LINKS --- */
+        .timeline-item {
+            padding: 16px 22px;
+            border-left: 4px solid #ff7ebb;
+            margin-bottom: 15px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-left: 4px solid #ff7ebb;
+            border-radius: 4px 16px 16px 4px;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .timeline-item:last-child {
+            margin-bottom: 0;
+        }
+
+        /* --- SMART CRITICAL REMINDERS --- */
+        .reminder {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 16px 20px;
+            border-radius: 6px 18px 18px 6px;
+            margin-bottom: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .reminder:last-child {
+            margin-bottom: 0;
+        }
+
+        .priority-high { border-left: 4px solid #f87171; color: #f87171; background: rgba(248, 113, 113, 0.05); }
+        .priority-medium { border-left: 4px solid #fbbf24; color: #fbbf24; background: rgba(251, 191, 36, 0.05); }
+        .priority-low { border-left: 4px solid #4ade80; color: #4ade80; background: rgba(74, 222, 128, 0.05); }
+
+        /* --- RESPONSIVE BRACKETS --- */
+        @media (max-width: 1100px) {
+            .split-dashboard { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 900px) {
+            .sidebar { display: none; }
+            .main { margin-left: 0; width: 100%; padding: 30px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="sidebar">
+        <div class="logo"><a href="index.html"><i class="fa-solid fa-gamepad"></i> LevelUp</a></div>
+        <div class="menu">
+            <a href="dashboard.html"><i class="fa-solid fa-house"></i> Dashboard</a>
+            <a href="notes.html"><i class="fa-solid fa-camera"></i> Quiz Generator</a>
+            <a href="flashcard.html"><i class="fa-solid fa-brain"></i> Flashcards</a>
+            <a href="analytics.html"><i class="fa-solid fa-chart-simple"></i> Analytics</a>
+            <a href="studygroup.html"><i class="fa-solid fa-users"></i> Study Lobbies</a>
+            <a href="doubts.html"><i class="fa-solid fa-circle-question"></i> Doubt Core</a>
+            <a href="leaderboard.html"><i class="fa-solid fa-ranking-star"></i> Leaderboard</a>
+            <a href="planner.html" class="active"><i class="fa-solid fa-calendar-days"></i> Planner</a>
+            <a href="profile.html"><i class="fa-solid fa-user-gear"></i> Profile</a>
+        </div>
+    </nav>
+
+    <main class="main">
+        <div class="split-dashboard">
+            
+            <div class="left-pane">
+                
+                <section class="card" id="examCard">
+                    <h2><i class="fa-solid fa-satellite-dish"></i> Target Campaigns</h2>
+                    <div class="exam-grid">
+                        <div class="exam-card">
+                            <h3>Data Structures</h3>
+                            <p>Mid-Semester Exam</p>
+                            <div class="countdown"><i class="fa-regular fa-clock"></i> 15 Days</div>
+                        </div>
+                        <div class="exam-card">
+                            <h3>Machine Learning</h3>
+                            <p>Quiz Assessment</p>
+                            <div class="countdown"><i class="fa-regular fa-clock"></i> 7 Days</div>
+                        </div>
+                        <div class="exam-card">
+                            <h3>DBMS Masters</h3>
+                            <p>Internal Evaluation</p>
+                            <div class="countdown"><i class="fa-regular fa-clock"></i> 22 Days</div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="card" id="planCard">
+                    <h2><i class="fa-solid fa-robot"></i> AI Personalized Quests</h2>
+                    <div class="feed">
+                        <div class="task">
+                            <span><i class="fa-regular fa-circle-check" style="color: #4ade80;"></i> Revise DSA Arrays & Linked Lists</span>
+                            <span class="status-badge completed">Cleared</span>
+                        </div>
+                        <div class="task">
+                            <span><i class="fa-regular fa-circle" style="color: #fbbf24;"></i> Practice ML Classification Problems</span>
+                            <span class="status-badge pending">Pending</span>
+                        </div>
+                        <div class="task">
+                            <span><i class="fa-regular fa-circle" style="color: #fbbf24;"></i> Review DBMS Normalization Matrix</span>
+                            <span class="status-badge pending">Pending</span>
+                        </div>
+                        <div class="task">
+                            <span><i class="fa-regular fa-circle-check" style="color: #4ade80;"></i> Complete Arena Quiz Challenge</span>
+                            <span class="status-badge completed">Cleared</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="card" id="timelineCard">
+                    <h2><i class="fa-solid fa-map-signs"></i> Campaign Roadmap Timeline</h2>
+                    <div class="timeline-feed">
+                        <div class="timeline-item"><i class="fa-solid fa-flag-checkered"></i> Week 1 → Complete DSA Fundamentals</div>
+                        <div class="timeline-item"><i class="fa-solid fa-code-fork"></i> Week 2 → DBMS Revision & Flashcards</div>
+                        <div class="timeline-item"><i class="fa-solid fa-rocket"></i> Week 3 → Machine Learning Practice Arena</div>
+                        <div class="timeline-item"><i class="fa-solid fa-trophy"></i> Week 4 → Mock Core Evaluations & Rank Sync</div>
+                    </div>
+                </section>
+
+            </div>
+
+            <div class="right-pane">
+                
+                <section class="card">
+                    <h2><i class="fa-solid fa-calendar-plus"></i> Inject Target Campaign</h2>
+                    <div class="form-container">
+                        <input type="text" placeholder="Subject Target Name" id="subjectIn">
+                        <input type="date" id="dateIn">
+                        <button class="btn" id="addExamBtn" style="width: 100%; justify-content: center;">
+                            Deploy Campaign Node <i class="fa-solid fa-plus"></i>
+                        </button>
+                    </div>
+                </section>
+
+                <section class="card">
+                    <h2><i class="fa-solid fa-chart-line"></i> Monthly Telemetry Track</h2>
+                    <p style="font-weight: 600; font-size: 15px;">72% Goal Target Completed</p>
+                    <div class="progress-box">
+                        <div class="progress"></div>
+                    </div>
+                </section>
+
+                <section class="card" id="reminderCard">
+                    <h2><i class="fa-solid fa-bell"></i> Critical Alert Dispatches</h2>
+                    <div class="reminder-feed">
+                        <div class="reminder priority-high">
+                            <i class="fa-solid fa-triangle-exclamation"></i> Machine Learning Match in 7 Days
+                        </div>
+                        <div class="reminder priority-medium">
+                            <i class="fa-solid fa-hourglass-half"></i> Sync DBMS Flashcard Deck Today
+                        </div>
+                        <div class="reminder priority-low">
+                            <i class="fa-solid fa-circle-check"></i> Review Synced AI Profiles Before Weekend
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // BACKEND MOCK DISPATCH TRANSMISSION DETECTOR
+        document.getElementById("addExamBtn").addEventListener("click", () => {
+            const subj = document.getElementById("subjectIn").value;
+            if(subj.trim() === "") {
+                alert("Please declare a valid campaign target name.");
+                return;
+            }
+            alert("LevelUp System: Target Campaign Loop [" + subj + "] injected successfully into database matrices!");
+            document.getElementById("subjectIn").value = "";
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LevelUp AI - Server Leaderboard Arena</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            /* High-Vibrancy Sunset Dreamy Palette */
+            --bg-gradient: linear-gradient(135deg, #1e1b4b 0%, #4c1d95 20%, #831843 45%, #db2777 70%, #f97316 90%, #ffedd5 100%);
+            --text-dark: #1e293b;
+            --text-light: #ffffff;
+            --primary-grad: linear-gradient(135deg, #ff7ebb, #ff9f43);
+            --btn-grad: linear-gradient(90deg, #ff7ebb, #f97316);
+            --glass-bg: rgba(255, 255, 255, 0.11);
+            --glass-border: rgba(255, 255, 255, 0.22);
+            --shadow-sm: 0 8px 32px rgba(49, 16, 66, 0.2);
+            --shadow-md: 0 16px 32px rgba(219, 39, 119, 0.25);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            color: var(--text-light);
+            min-height: 100vh;
+            display: flex;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* --- UNIFORM CORE SIDEBAR NAVIGATION --- */
+        .sidebar {
+            width: 280px;
+            background: rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border-right: 1px solid var(--glass-border);
+            padding: 30px 20px;
+            position: fixed;
+            height: 100%;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo {
+            font-size: 26px;
+            font-weight: 800;
+            margin-bottom: 35px;
+            padding-left: 15px;
+        }
+
+        .logo a {
+            color: var(--text-light);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo i {
+            color: #ff7ebb;
+            filter: drop-shadow(0 0 8px #ff7ebb);
+        }
+
+        .menu {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            overflow-y: auto;
+        }
+
+        .menu a {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            text-decoration: none;
+            color: rgba(255, 255, 255, 0.75);
+            padding: 12px 20px;
+            border-radius: 16px;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.25s ease;
+            border: 1px solid transparent;
+        }
+
+        .menu a:hover, .menu a.active {
+            background: rgba(255, 255, 255, 0.15);
+            color: var(--text-light);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateX(4px);
+        }
+
+        .menu a.active i {
+            color: #ff7ebb;
+        }
+
+        /* --- MAIN DASHBOARD AREA --- */
+        .main {
+            margin-left: 280px;
+            width: calc(100% - 280px);
+            padding: 50px;
+            position: relative;
+        }
+
+        /* --- SPLIT ARENA INTERFACE --- */
+        .split-dashboard {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 30px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.11);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            padding: 35px;
+            border-radius: 28px;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* High-Transparency Background Cute Critters Artworks */
+        #podiumCard::before { content: '🦄'; position: absolute; font-size: 140px; top: -30px; right: -20px; opacity: 0.03; pointer-events: none; }
+        #myRankCard::before { content: '🐼'; position: absolute; font-size: 100px; bottom: -10px; right: 15px; opacity: 0.04; pointer-events: none; }
+        #globalCard::before { content: '🐱'; position: absolute; font-size: 130px; bottom: -30px; right: -10px; opacity: 0.04; pointer-events: none; }
+
+        h2 {
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        h2 i {
+            color: #ff9f43;
+        }
+
+        /* --- GAMIFIED STATS DISPLAY --- */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-box {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 20px;
+            border-radius: 18px;
+            text-align: center;
+        }
+
+        .stat-box h3 {
+            font-size: 12px;
+            color: rgba(255,255,255,0.7);
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-box h1 {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ff7ebb, #ff9f43);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* --- 3D GLASS PODIUM --- */
+        .podium {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 16px;
+            margin-top: 20px;
+            height: 290px;
+        }
+
+        .winner {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 20px 15px;
+            border-radius: 24px;
+            text-align: center;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            transition: transform 0.3s ease;
+        }
+
+        .winner:hover {
+            transform: translateY(-4px);
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .winner.first {
+            height: 260px;
+            border: 2px solid #fbbf24;
+            box-shadow: 0 0 15px rgba(251, 191, 36, 0.2);
+            background: rgba(251, 191, 36, 0.05);
+        }
+
+        .winner.second { height: 210px; }
+        .winner.third { height: 180px; }
+
+        .podium-avatar {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            margin: 0 auto 12px auto;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .winner.first .podium-avatar { border-color: #fbbf24; }
+
+        .winner h4 {
+            font-size: 15px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .winner p {
+            font-size: 12px;
+            font-weight: 600;
+            color: #ff9f43;
+            margin-top: 4px;
+        }
+
+        /* --- RANKING RACKS TABLE --- */
+        .rank-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .rank-row {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 16px 20px;
+            border-radius: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
+        }
+
+        .rank-row:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .rank-row.highlight-user {
+            background: rgba(255, 126, 187, 0.15);
+            border-color: rgba(255, 126, 187, 0.3);
+        }
+
+        .row-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .rank-number {
+            font-size: 16px;
+            font-weight: 800;
+            color: #ff7ebb;
+            width: 30px;
+        }
+
+        .points-value {
+            font-size: 13px;
+            font-weight: 700;
+            color: #ff9f43;
+            background: rgba(255, 159, 67, 0.12);
+            padding: 4px 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 159, 67, 0.2);
+        }
+
+        .rank-row span {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        @media (max-width: 1150px) {
+            .split-dashboard { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 900px) {
+            .sidebar { display: none; }
+            .main { margin-left: 0; width: 100%; padding: 30px 20px; }
+            .podium { height: auto; flex-direction: column; align-items: stretch; }
+            .winner.first, .winner.second, .winner.third { height: auto; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="sidebar">
+        <div class="logo"><a href="index.html"><i class="fa-solid fa-gamepad"></i> LevelUp</a></div>
+        <div class="menu">
+            <a href="dashboard.html"><i class="fa-solid fa-house"></i> Dashboard</a>
+            <a href="notes.html"><i class="fa-solid fa-camera"></i> Quiz Generator</a>
+            <a href="flashcard.html"><i class="fa-solid fa-brain"></i> Flashcards</a>
+            <a href="analytics.html"><i class="fa-solid fa-chart-simple"></i> Analytics</a>
+            <a href="studygroup.html"><i class="fa-solid fa-users"></i> Study Lobbies</a>
+            <a href="doubts.html"><i class="fa-solid fa-circle-question"></i> Doubt Core</a>
+            <a href="leaderboard.html" class="active"><i class="fa-solid fa-ranking-star"></i> Leaderboard</a>
+            <a href="planner.html"><i class="fa-solid fa-calendar-days"></i> Planner</a>
+            <a href="profile.html"><i class="fa-solid fa-user-gear"></i> Profile</a>
+        </div>
+    </nav>
+
+    <main class="main">
+        <div class="split-dashboard">
+            
+            <div class="left-pane">
+                
+                <section class="card" id="myRankCard">
+                    <h2><i class="fa-solid fa-id-card"></i> Your Ranking Status</h2>
+                    <div class="stats-grid">
+                        <div class="stat-box"><h3>Global Rank</h3><h1>#12</h1></div>
+                        <div class="stat-box"><h3>Accumulated XP</h3><h1>12,450</h1></div>
+                        <div class="stat-box"><h3>Player Level</h3><h1>15</h1></div>
+                        <div class="stat-box"><h3>Trophies</h3><h1>18</h1></div>
+                    </div>
+                </section>
+
+                <section class="card" id="globalCard">
+                    <h2><i class="fa-solid fa-earth-americas"></i> Global Standings</h2>
+                    <div class="rank-list">
+                        <div class="rank-row">
+                            <div class="row-left"><div class="rank-number">#1</div><div>Rahul</div></div>
+                            <div class="points-value">19,850 XP</div>
+                        </div>
+                        <div class="rank-row">
+                            <div class="row-left"><div class="rank-number">#2</div><div>Sneha</div></div>
+                            <div class="points-value">17,400 XP</div>
+                        </div>
+                        <div class="rank-row">
+                            <div class="row-left"><div class="rank-number">#3</div><div>Arjun</div></div>
+                            <div class="points-value">16,900 XP</div>
+                        </div>
+                        <div class="rank-row highlight-user">
+                            <div class="row-left"><div class="rank-number">#12</div><div>You</div></div>
+                            <div class="points-value">12,450 XP</div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="card">
+                    <h2><i class="fa-solid fa-users-rectangle"></i> Study Squad Lobbies</h2>
+                    <div class="rank-list">
+                        <div class="rank-row">
+                            <div class="row-left"><span style="color:#fbbf24; margin-right:8px;">🏆</span> DSA Warriors</div>
+                            <div class="points-value">42,000 XP</div>
+                        </div>
+                        <div class="rank-row">
+                            <div class="row-left"><span style="color:#cbd5e1; margin-right:8px;">🥈</span> AI Masters</div>
+                            <div class="points-value">39,500 XP</div>
+                        </div>
+                        <div class="rank-row">
+                            <div class="row-left"><span style="color:#cd7f32; margin-right:8px;">🥉</span> DBMS Legends</div>
+                            <div class="points-value">34,200 XP</div>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+
+            <div class="right-pane">
+                
+                <section class="card" id="podiumCard">
+                    <h2><i class="fa-solid fa-crown"></i> Elite Tier Podium</h2>
+                    <div class="podium">
+                        <div class="winner second">
+                            <div class="podium-avatar">🥈</div>
+                            <h4>Sneha</h4>
+                            <p>17,400 XP</p>
+                        </div>
+                        <div class="winner first">
+                            <div class="podium-avatar">🥇</div>
+                            <h4>Rahul</h4>
+                            <p>19,850 XP</p>
+                        </div>
+                        <div class="winner third">
+                            <div class="podium-avatar">🥉</div>
+                            <h4>Arjun</h4>
+                            <p>16,900 XP</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="card">
+                    <h2><i class="fa-solid fa-bolt"></i> Weekly Run Multipliers</h2>
+                    <div class="rank-list">
+                        <div class="rank-row"><span>🥇 Sneha</span><span style="color:#4ade80; font-weight:700;">+2,100 XP</span></div>
+                        <div class="rank-row"><span>🥈 Rahul</span><span style="color:#4ade80; font-weight:700;">+1,950 XP</span></div>
+                        <div class="rank-row"><span>🥉 You</span><span style="color:#4ade80; font-weight:700;">+1,620 XP</span></div>
+                    </div>
+                </section>
+
+                <section class="card">
+                    <h2><i class="fa-solid fa-award"></i> Achievement Badges Leaderboard</h2>
+                    <div class="rank-list">
+                        <div class="rank-row"><span>🏆 Rahul</span><span style="font-weight:700;">28 Badges</span></div>
+                        <div class="rank-row"><span>🔥 Sneha</span><span style="font-weight:700;">25 Badges</span></div>
+                        <div class="rank-row"><span>⭐ You</span><span style="font-weight:700;">18 Badges</span></div>
+                    </div>
+                </section>
+
+            </div>
+
+        </div>
+    </main>
+
+</body>
+</html>
