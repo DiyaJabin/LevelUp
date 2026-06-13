@@ -17,12 +17,14 @@ Students can upload handwritten notes, PDFs, or learning resources. Using AI, OC
 
 ## 🛠️ Tech Stack
 
-* Frontend: React, HTML, CSS, JavaScript
-* Backend: Python (FastAPI / Flask)
-* AI: Gemini API
-* Computer Vision: OpenCV, Tesseract OCR
-* Database: Firebase / Supabase
-
+* **Frontend:** HTML, CSS, JavaScript
+* **Backend:** Python (FastAPI / Flask)
+* **Database:** PostgreSQL
+* **Core AI Engine:** Google Gemini API
+* **Digital PDF Parsing:** PyPDF
+* **Computer Vision:** OpenCV (Dilation & Contours), Pillow (PIL)
+* **Deep Learning Framework:** PyTorch, Hugging Face Transformers
+* **Local OCR Model:** Microsoft TrOCR (Vision Transformer)
 ## 🎯 Vision
 
 Make students forget they're studying and start enjoying the process of learning.
