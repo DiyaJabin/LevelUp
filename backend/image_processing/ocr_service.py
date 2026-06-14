@@ -5,8 +5,8 @@ import os
 import numpy as np
 from PIL import Image
 from transformers import TrOCRProcessor, VisionEncoderDecoderModel
-from backend.image_processing.image_preprocessing import load_and_clean_image
-from backend.image_processing.pdf_service import PDFTextExtractorService
+from .image_preprocessing import load_and_clean_image
+from .pdf_service import PDFTextExtractorService
 
 class QuizTextExtractorService:
     def __init__(self):

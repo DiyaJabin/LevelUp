@@ -588,7 +588,10 @@
             <h1>🎉 Campaign Concluded</h1>
             <p>Your session telemetry successfully recorded into database profiles.</p>
             <br>
-            <h2 style="color: #4ade80;"><i class="fa-solid fa-circle-plus"></i> 250 Base XP Secured</h2>
+            <h2 style="color: #4ade80;">
+                <i class="fa-solid fa-circle-plus"></i>
+                <span id="modalXpText">XP Secured</span>
+            </h2>
             <br>
             <button class="btn" id="closeReward" style="width: 100%;">Return to Console</button>
         </div>
@@ -665,14 +668,19 @@ document.addEventListener("DOMContentLoaded", () => {
                 Later, replace demoExtractedText with actual OCR output.
             */
 
-            const response = await fetch(`${API_BASE}/api/process-notes`, {
+            const difficulty = document.getElementById("difficulty").value;
+            const quizType = document.getElementById("quizType").value;
+            const questionCount = document.getElementById("questionCount").value;
+
+            const formData = new FormData();
+            formData.append("file", fileInput.files[0]);
+            formData.append("difficulty", difficulty);
+            formData.append("quiz_type", quizType);
+            formData.append("question_count", questionCount);
+
+            const response = await fetch(`${API_BASE}/api/process-file`, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    text: demoExtractedText
-                })
+                body: formData
             });
 
             const data = await response.json();
@@ -822,6 +830,7 @@ document.addEventListener("DOMContentLoaded", () => {
             document.getElementById("correctValue").innerText = result.score;
             document.getElementById("performanceValue").innerText = performance;
             document.getElementById("xpValue").innerText = result.xp_earned;
+            document.getElementById("modalXpText").innerText = `${result.xp_earned} XP Secured`;
 
             analyticsCard.style.display = "block";
             badgeSection.style.display = "block";

@@ -441,6 +441,144 @@
             </div>
         </div>
     </main>
+<script>
+    function loadAnalyticsData() {
+        const quizResult = JSON.parse(localStorage.getItem("levelupQuizResult")) || null;
+        const learningContent = JSON.parse(localStorage.getItem("levelupLearningContent")) || null;
+
+        if (!quizResult) {
+            return;
+        }
+
+        const score = quizResult.score || 0;
+        const total = quizResult.total || 1;
+        const accuracy = Math.round((score / total) * 100);
+        const weakTopics = quizResult.weak_topics || [];
+        const topics = learningContent?.topics || [];
+        const subject = learningContent?.subject || "Latest Session";
+
+        updateOverview(accuracy, quizResult);
+        updateSubjectAnchors(topics, weakTopics, accuracy);
+        updateDiagnostics(weakTopics, subject, accuracy);
+        updateWeeklyChart(accuracy);
+        updateHeatmap(accuracy);
+        updateRoadmap(weakTopics, subject);
+    }
+
+    function updateOverview(accuracy, quizResult) {
+        const stats = document.querySelectorAll("#overviewCard .stat h1");
+
+        if (stats.length >= 4) {
+            stats[0].innerText = `${accuracy}%`;
+            stats[1].innerText = quizResult.level || 1;
+
+            const readiness = Math.max(35, Math.min(100, accuracy + 12));
+            stats[2].innerText = `${readiness}%`;
+
+            const delta = accuracy >= 70 ? "+18%" : accuracy >= 50 ? "+9%" : "-6%";
+            stats[3].innerText = delta;
+        }
+    }
+
+    function updateSubjectAnchors(topics, weakTopics, accuracy) {
+        const subjectGrid = document.querySelector(".subject-grid");
+
+        if (!subjectGrid) return;
+
+        const displayTopics = topics.length ? topics.slice(0, 4) : ["Generated Notes", "Quiz Practice", "Flashcards", "Revision"];
+
+        subjectGrid.innerHTML = "";
+
+        displayTopics.forEach((topic, index) => {
+            let mastery = Math.max(35, accuracy - index * 7 + 12);
+
+            if (weakTopics.includes(topic)) {
+                mastery = Math.max(30, accuracy - 20);
+            }
+
+            const div = document.createElement("div");
+            div.className = "subject";
+            div.innerHTML = `
+                ${topic}
+                <div class="progress">
+                    <div class="bar" style="width:${mastery}%;"></div>
+                </div>
+            `;
+            subjectGrid.appendChild(div);
+        });
+    }
+
+    function updateDiagnostics(weakTopics, subject, accuracy) {
+        const insights = document.querySelectorAll(".insight");
+
+        if (insights.length < 4) return;
+
+        if (!weakTopics.length) {
+            insights[0].innerHTML = `<i class="fa-solid fa-circle-check"></i><span>Excellent stability detected in ${subject}. No major weak topic found.</span>`;
+            insights[1].innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i><span>Continue flashcard review to maintain long-term memory retention.</span>`;
+            insights[2].innerHTML = `<i class="fa-solid fa-circle-exclamation"></i><span>No critical learning decay detected in the latest quiz attempt.</span>`;
+            insights[3].innerHTML = `<i class="fa-solid fa-bullseye"></i><span>Targeted Recommendation: Attempt a harder quiz tier to unlock advanced mastery.</span>`;
+            return;
+        }
+
+        insights[0].innerHTML = `<i class="fa-solid fa-circle-check"></i><span>Latest AI session completed for <strong>${subject}</strong> with ${accuracy}% accuracy.</span>`;
+        insights[1].innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i><span>Medium-risk nodes detected: <strong>${weakTopics.slice(0, 2).join(", ")}</strong>.</span>`;
+        insights[2].innerHTML = `<i class="fa-solid fa-circle-exclamation"></i><span>Critical recall gaps found across ${weakTopics.length} topic area(s). Review recommended.</span>`;
+        insights[3].innerHTML = `<i class="fa-solid fa-bullseye"></i><span>Targeted Recommendation: Join a study lobby and review flashcards for <strong>${weakTopics[0]}</strong>.</span>`;
+    }
+
+    function updateWeeklyChart(accuracy) {
+        const bars = document.querySelectorAll(".bar-chart");
+
+        bars.forEach((bar, index) => {
+            const variation = [-25, -10, 5, -15, 10, 0, 15][index] || 0;
+            const height = Math.max(25, Math.min(95, accuracy + variation));
+            bar.style.height = `${height}%`;
+        });
+    }
+
+    function updateHeatmap(accuracy) {
+        const cells = document.querySelectorAll(".cell");
+
+        cells.forEach((cell, index) => {
+            const opacity = Math.max(0.2, Math.min(0.95, (accuracy + index * 3) / 100));
+            cell.style.background = `rgba(255, 126, 187, ${opacity})`;
+        });
+    }
+
+    function updateRoadmap(weakTopics, subject) {
+        const tasks = document.querySelectorAll("#roadmapCard .task");
+
+        if (tasks.length < 4) return;
+
+        const topic1 = weakTopics[0] || subject;
+        const topic2 = weakTopics[1] || "Flashcard Revision";
+        const topic3 = weakTopics[2] || "Practice Quiz";
+        const topic4 = weakTopics[3] || "Study Lobby Session";
+
+        tasks[0].innerHTML = `
+            <span><i class="fa-solid fa-user-astronaut" style="color:#f87171;"></i> Review ${topic1}</span>
+            <span class="priority-badge danger">Critical Node</span>
+        `;
+
+        tasks[1].innerHTML = `
+            <span><i class="fa-solid fa-rocket" style="color:#fbbf24;"></i> Flashcard Arena: ${topic2}</span>
+            <span class="priority-badge warning">Medium Risk</span>
+        `;
+
+        tasks[2].innerHTML = `
+            <span><i class="fa-solid fa-bolt" style="color:#4ade80;"></i> Retake AI Quiz on ${topic3}</span>
+            <span class="priority-badge good">Ready Match</span>
+        `;
+
+        tasks[3].innerHTML = `
+            <span><i class="fa-solid fa-moon" style="color:#fbbf24;"></i> Join Lobby for ${topic4}</span>
+            <span class="priority-badge warning">Medium Risk</span>
+        `;
+    }
+
+    loadAnalyticsData();
+</script>
 
 </body>
 </html>

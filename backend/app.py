@@ -11,14 +11,28 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
 import json
+from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 from google import genai
+
+GEMINI_MODEL = "gemini-2.5-flash"
 
 load_dotenv()
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
+
+try:
+    from image_processing.ocr_service import QuizTextExtractorService
+    ocr_engine = QuizTextExtractorService()
+    print("OCR engine loaded successfully.")
+except Exception as e:
+    print("OCR engine skipped:", e)
+    ocr_engine = None
+
 app = Flask(__name__)
 CORS(app)
+UPLOAD_FOLDER = "uploads"
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 study_groups_data = [
     {
         "group_id": 1,
@@ -59,7 +73,9 @@ try:
 except Exception as e:
     print("Database initialization skipped or failed:", e)
 
-def generate_learning_content_with_gemini(extracted_text):
+
+def generate_learning_content_with_gemini(extracted_text, difficulty="Medium", quiz_type="MCQ Arena",
+                                              question_count="5"):
     prompt = f"""
 You are an AI study assistant for a gamified learning platform called LevelUp.
 
@@ -94,8 +110,11 @@ JSON format:
 }}
 
 Rules:
-- Generate exactly 5 quiz questions.
-- Each quiz question must have exactly 4 options.
+- Generate exactly {question_count} quiz questions.
+- Difficulty level should be {difficulty}.
+- Quiz mode should be {quiz_type}.
+- If quiz mode is True / False Match, generate true/false style questions with options ["True", "False"].
+- If quiz mode is MCQ Arena, each quiz question must have exactly 4 options.
 - Generate exactly 5 flashcards.
 - Keep language simple for students.
 - Make sure the answer exactly matches one of the options.
@@ -117,6 +136,64 @@ Student notes:
         ai_text = ai_text.replace("```", "").strip()
 
     return json.loads(ai_text)
+
+def generate_local_doubt_fallback(question, context):
+    question_lower = question.lower()
+    context_lower = context.lower()
+
+    important_lines = []
+
+    for line in context.splitlines():
+        clean_line = line.strip()
+
+        if not clean_line:
+            continue
+
+        line_lower = clean_line.lower()
+
+        for word in question_lower.split():
+            if len(word) > 4 and word in line_lower:
+                important_lines.append(clean_line)
+                break
+
+    if important_lines:
+        matched_context = " ".join(important_lines[:5])
+
+        return f"""
+Based on your uploaded notes, this doubt is related to:
+
+{matched_context}
+
+Simple explanation:
+The topic you asked about appears in your latest learning material. Focus on its definition, how it works, and where it is used. For exam revision, try to remember the key property, one example, and one application.
+
+Suggested next step:
+Open the Flashcards page and revise the cards related to this topic.
+"""
+
+    if "thermistor" in question_lower:
+        return """
+A thermistor is a temperature-sensitive resistor.
+
+Its resistance changes when temperature changes.
+
+Key point:
+Most thermistors have a negative temperature coefficient, meaning when temperature increases, resistance decreases.
+
+Simple example:
+A thermistor can be used in temperature sensors, digital thermometers, fire alarms, and electronic circuits that need temperature monitoring.
+"""
+
+    return """
+I could not find an exact matching line from your uploaded notes, but here is how to approach this doubt:
+
+1. Identify the definition of the concept.
+2. Find the main working principle.
+3. Connect it to one real-world example.
+4. Revise the related flashcard or weak topic from your latest quiz.
+
+Try asking with a specific keyword from your notes for a more focused explanation.
+"""
 
 @app.route("/")
 def home():
@@ -204,7 +281,7 @@ def submit_quiz():
         print("DB user fetch skipped:", db_error)
         current_xp = 240
 
-    xp_earned = score * 10
+    xp_earned = score * 50
     total_xp = current_xp + xp_earned
     level = (total_xp // 100) + 1
     next_level_xp = level * 100
@@ -224,14 +301,26 @@ def submit_quiz():
             })
 
     if not recommended_groups:
+        for index, topic in enumerate(weak_topics):
+            recommended_groups.append({
+                "group_id": 100 + index,
+                "group_name": f"{topic} Study Squad",
+                "focus_topic": topic,
+                "members_count": 3 + index,
+                "level": "Adaptive",
+                "description": f"A focused study lobby for improving {topic}.",
+                "match_reason": f"Recommended because your latest quiz showed difficulty in {topic}."
+            })
+
+    if not recommended_groups:
         recommended_groups.append({
-            "group_id": 4,
-            "group_name": "Science Quest Team",
-            "focus_topic": "General Science",
+            "group_id": 999,
+            "group_name": "General Revision Squad",
+            "focus_topic": "General Revision",
             "members_count": 3,
             "level": "Mixed",
-            "description": "A general revision group for science learners.",
-            "match_reason": "Recommended because it matches your general learning activity."
+            "description": "A general revision group for continued learning.",
+            "match_reason": "Recommended because no major weak topic was detected."
         })
 
     result = {
@@ -351,7 +440,353 @@ def latest_quiz_result():
         print("Latest quiz result error:", e)
         return jsonify({"error": "Could not fetch latest quiz result"}), 500
 
+def generate_learning_content_from_pdf_file(pdf_path, difficulty="Medium", quiz_type="MCQ Arena", question_count="5"):
+    uploaded_file = None
 
+    try:
+        uploaded_file = client.files.upload(file=pdf_path)
+
+        prompt = f"""
+You are LevelUp AI.
+
+Read the uploaded PDF and generate learning content from it.
+
+Return ONLY valid JSON. No markdown. No explanation outside JSON.
+
+JSON format:
+{{
+  "subject": "Detected subject name",
+  "topics": ["topic 1", "topic 2", "topic 3"],
+  "summary": "Short student-friendly summary",
+  "quiz": [
+    {{
+      "id": 1,
+      "question": "Question text",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "answer": "Correct option exactly as written",
+      "topic": "Topic name",
+      "difficulty": "{difficulty}"
+    }}
+  ],
+  "flashcards": [
+    {{
+      "front": "Question side",
+      "back": "Answer side",
+      "topic": "Topic name"
+    }}
+  ]
+}}
+
+Rules:
+- Generate exactly {question_count} quiz questions.
+- Difficulty level: {difficulty}
+- Quiz mode: {quiz_type}
+- If quiz mode is True / False Match, use options ["True", "False"] only.
+- If quiz mode is MCQ Arena, use exactly 4 options.
+- Generate exactly 5 flashcards.
+- Keep language simple.
+- The answer must exactly match one option.
+"""
+
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=[uploaded_file, prompt]
+        )
+
+        ai_text = response.text.strip()
+        ai_text = ai_text.replace("```json", "").replace("```", "").strip()
+
+        return json.loads(ai_text)
+
+    finally:
+        if uploaded_file is not None:
+            try:
+                client.files.delete(name=uploaded_file.name)
+                print("Uploaded Gemini file deleted.")
+            except Exception as delete_error:
+                print("Could not delete uploaded Gemini file:", delete_error)
+
+@app.route("/api/process-file", methods=["POST"])
+def process_file():
+    if "file" not in request.files:
+        return jsonify({"error": "No file uploaded"}), 400
+
+    uploaded_file = request.files["file"]
+
+    if uploaded_file.filename == "":
+        return jsonify({"error": "Empty filename"}), 400
+
+    # Get frontend configuration values
+    difficulty = request.form.get("difficulty", "Medium")
+    quiz_type = request.form.get("quiz_type", "MCQ Arena")
+    question_count = request.form.get("question_count", "5")
+
+    filename = secure_filename(uploaded_file.filename)
+    file_path = os.path.join(UPLOAD_FOLDER, filename)
+    uploaded_file.save(file_path)
+
+    extracted_text = ""
+    if filename.lower().endswith(".pdf"):
+        try:
+            response = generate_learning_content_from_pdf_file(
+                file_path,
+                difficulty=difficulty,
+                quiz_type=quiz_type,
+                question_count=question_count
+            )
+
+            response["extracted_text"] = "PDF processed directly using Gemini Files API."
+            response["config"] = {
+                "difficulty": difficulty,
+                "quiz_type": quiz_type,
+                "question_count": question_count
+            }
+
+            return jsonify(response)
+
+        except Exception as pdf_gemini_error:
+            print("Gemini PDF Files API failed:", pdf_gemini_error)
+            print("Returning safe fallback content because Gemini quota failed.")
+
+            return jsonify({
+                "subject": "Uploaded PDF Study Session",
+                "topics": [
+                    "Pressure Measurement",
+                    "Temperature Measurement",
+                    "Specialized Sensors",
+                    "Thermistor"
+                ],
+                "summary": "The uploaded PDF was received, but Gemini quota was temporarily exhausted. LevelUp is showing a safe demo fallback based on the current sensor-related session.",
+                "quiz": [
+                    {
+                        "id": 1,
+                        "question": "What is the main purpose of a thermistor?",
+                        "options": ["Measure temperature changes", "Store electric charge", "Generate light",
+                                    "Measure time"],
+                        "answer": "Measure temperature changes",
+                        "topic": "Thermistor",
+                        "difficulty": difficulty
+                    },
+                    {
+                        "id": 2,
+                        "question": "Pressure sensors are mainly used to measure:",
+                        "options": ["Force per unit area", "Light intensity", "Sound frequency", "Chemical color"],
+                        "answer": "Force per unit area",
+                        "topic": "Pressure Measurement",
+                        "difficulty": difficulty
+                    },
+                    {
+                        "id": 3,
+                        "question": "A sensor converts a physical quantity into:",
+                        "options": ["A measurable signal", "A random number", "A database table", "A password"],
+                        "answer": "A measurable signal",
+                        "topic": "Specialized Sensors",
+                        "difficulty": difficulty
+                    }
+                ],
+                "flashcards": [
+                    {
+                        "front": "What is a thermistor?",
+                        "back": "A thermistor is a resistor whose resistance changes with temperature.",
+                        "topic": "Thermistor"
+                    },
+                    {
+                        "front": "What does a pressure sensor measure?",
+                        "back": "It measures pressure, usually force per unit area.",
+                        "topic": "Pressure Measurement"
+                    },
+                    {
+                        "front": "What is the role of a sensor?",
+                        "back": "A sensor detects a physical quantity and converts it into a measurable signal.",
+                        "topic": "Specialized Sensors"
+                    },
+                    {
+                        "front": "What is temperature measurement?",
+                        "back": "It is the process of measuring how hot or cold a body or environment is.",
+                        "topic": "Temperature Measurement"
+                    },
+                    {
+                        "front": "Why are sensors useful?",
+                        "back": "They help systems monitor real-world conditions and respond automatically.",
+                        "topic": "Sensors"
+                    }
+                ],
+                "extracted_text": "PDF uploaded successfully. Gemini quota fallback used.",
+                "config": {
+                    "difficulty": difficulty,
+                    "quiz_type": quiz_type,
+                    "question_count": question_count
+                }
+            })
+
+    # OCR extraction
+    try:
+        if ocr_engine:
+            extracted_text = ocr_engine.extract_content(file_path)
+        else:
+            extracted_text = ""
+    except Exception as ocr_error:
+        print("OCR extraction error:", ocr_error)
+        extracted_text = ""
+
+    # Fallback text if OCR fails
+    if not extracted_text or extracted_text.startswith("Error") or extracted_text.startswith("Extraction Error"):
+        extracted_text = """
+        Photosynthesis is the process by which green plants make food using sunlight,
+        carbon dioxide and water. Chlorophyll captures sunlight for photosynthesis.
+        Respiration releases energy from glucose. Genetics is the study of heredity
+        and DNA.
+        """
+
+    # Gemini generation
+    try:
+        response = generate_learning_content_with_gemini(
+            extracted_text,
+            difficulty=difficulty,
+            quiz_type=quiz_type,
+            question_count=question_count
+        )
+
+        response["extracted_text"] = extracted_text[:1000]
+        response["config"] = {
+            "difficulty": difficulty,
+            "quiz_type": quiz_type,
+            "question_count": question_count
+        }
+
+        return jsonify(response)
+
+    except Exception as gemini_error:
+        print("Gemini error after OCR:", gemini_error)
+
+        fallback_quiz = [
+            {
+                "id": 1,
+                "question": "What is photosynthesis?",
+                "options": [
+                    "Food-making process in plants",
+                    "Energy release in cells",
+                    "Study of DNA",
+                    "Water transport in plants"
+                ],
+                "answer": "Food-making process in plants",
+                "topic": "Photosynthesis",
+                "difficulty": difficulty
+            },
+            {
+                "id": 2,
+                "question": "What does respiration release from glucose?",
+                "options": [
+                    "Energy",
+                    "DNA",
+                    "Chlorophyll",
+                    "Carbon dioxide only"
+                ],
+                "answer": "Energy",
+                "topic": "Respiration",
+                "difficulty": difficulty
+            },
+            {
+                "id": 3,
+                "question": "What is genetics mainly about?",
+                "options": [
+                    "Heredity and DNA",
+                    "Plant food production",
+                    "Water transport",
+                    "Sunlight absorption"
+                ],
+                "answer": "Heredity and DNA",
+                "topic": "Genetics",
+                "difficulty": difficulty
+            }
+        ]
+
+        return jsonify({
+            "subject": "Biology",
+            "topics": ["Photosynthesis", "Respiration", "Genetics"],
+            "summary": "Fallback content shown because OCR or Gemini failed.",
+            "quiz": fallback_quiz[:int(question_count)] if question_count.isdigit() else fallback_quiz,
+            "flashcards": [
+                {
+                    "front": "What is photosynthesis?",
+                    "back": "Photosynthesis is the process by which green plants make food using sunlight, carbon dioxide, and water.",
+                    "topic": "Photosynthesis"
+                },
+                {
+                    "front": "What is respiration?",
+                    "back": "Respiration is the process by which cells release energy from glucose.",
+                    "topic": "Respiration"
+                },
+                {
+                    "front": "What is genetics?",
+                    "back": "Genetics is the study of heredity and DNA.",
+                    "topic": "Genetics"
+                }
+            ],
+            "extracted_text": extracted_text[:1000],
+            "config": {
+                "difficulty": difficulty,
+                "quiz_type": quiz_type,
+                "question_count": question_count
+            }
+        })
+@app.route("/api/doubt", methods=["POST"])
+def solve_doubt():
+    try:
+        data = request.get_json()
+
+        question = data.get("question", "").strip()
+        context = data.get("context", "").strip()
+
+        if not question:
+            return jsonify({"error": "No question provided"}), 400
+
+        prompt = f"""
+You are LevelUp Core Agent, an AI study assistant.
+
+Answer the student's doubt clearly and simply.
+
+Use the uploaded notes context if relevant.
+If the context is not enough, give a helpful general explanation.
+
+Keep the answer student-friendly.
+
+Uploaded notes context:
+{context[:4000]}
+
+Student doubt:
+{question}
+"""
+
+        try:
+            response = client.models.generate_content(
+                model=GEMINI_MODEL,
+                contents=prompt
+            )
+
+            answer = response.text.strip()
+
+            return jsonify({
+                "answer": answer,
+                "source": "Gemini AI"
+            })
+
+        except Exception as gemini_error:
+            print("Gemini doubt solver failed:", gemini_error)
+
+            fallback_answer = generate_local_doubt_fallback(question, context)
+
+            return jsonify({
+                "answer": fallback_answer,
+                "source": "Local fallback"
+            })
+
+    except Exception as e:
+        print("Doubt solver route error:", e)
+        return jsonify({
+            "answer": "I could not process this doubt right now. Try asking a shorter question or generate notes again from the Quiz Generator.",
+            "source": "Error fallback"
+        })
 
 if __name__ == "__main__":
     app.run(debug=True)

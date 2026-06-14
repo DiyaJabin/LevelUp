@@ -549,54 +549,119 @@
         </div>
     </main>
 
-    <script>
-        // CHAT DISPATCH ENGINE PROCESSOR
-        const sendBtn = document.getElementById("sendBtn");
-        const chatBox = document.getElementById("chatBox");
-        const userInput = document.getElementById("userInput");
 
-        function transmitMessage() {
-            const currentQuery = userInput.value.trim();
-            if (currentQuery === "") return;
+       <script>
+    const API_BASE = "http://127.0.0.1:5000";
 
-            // Generate user text shield bubble
-            chatBox.innerHTML += `
-                <div class="message user">
-                    ${currentQuery}
-                </div>
+    const sendBtn = document.getElementById("sendBtn");
+    const chatBox = document.getElementById("chatBox");
+    const userInput = document.getElementById("userInput");
+
+    function getLatestNotesContext() {
+        const savedContent = localStorage.getItem("levelupLearningContent");
+
+        if (!savedContent) {
+            return "";
+        }
+
+        const parsed = JSON.parse(savedContent);
+
+        return `
+Subject: ${parsed.subject || "Unknown"}
+
+Summary:
+${parsed.summary || ""}
+
+Topics:
+${(parsed.topics || []).join(", ")}
+
+Extracted Notes:
+${parsed.extracted_text || ""}
+        `;
+    }
+
+    async function transmitMessage() {
+        const currentQuery = userInput.value.trim();
+        if (currentQuery === "") return;
+
+        chatBox.innerHTML += `
+            <div class="message user">
+                ${currentQuery}
+            </div>
+        `;
+
+        userInput.value = "";
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        const loadingId = "loading-" + Date.now();
+
+        chatBox.innerHTML += `
+            <div class="message bot" id="${loadingId}">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                <strong>LevelUp Core Agent:</strong> Processing your doubt using Gemini...
+            </div>
+        `;
+
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        try {
+            const context = getLatestNotesContext();
+
+            const response = await fetch(`${API_BASE}/api/doubt`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    question: currentQuery,
+                    context: context
+                })
+            });
+
+            const data = await response.json();
+
+            const loadingBubble = document.getElementById(loadingId);
+
+            loadingBubble.innerHTML = `
+                <i class="fa-solid fa-microchip"></i>
+                <strong>LevelUp Core Agent:</strong><br><br>
+                ${data.answer.replace(/\n/g, "<br>")}
             `;
-            userInput.value = "";
+
             chatBox.scrollTop = chatBox.scrollHeight;
 
-            // Mock automated engine backend validation feedback loop
-            setTimeout(() => {
-                chatBox.innerHTML += `
-                    <div class="message bot">
-                        <i class="fa-solid fa-microchip"></i> <strong>LevelUp Core Agent:</strong> Telemetry received. Query parameters mapped cleanly. Resolving logic block metrics... Answer payload will attach natively here.
-                    </div>
-                `;
-                chatBox.scrollTop = chatBox.scrollHeight;
-            }, 650);
-        }
+        } catch (error) {
+            console.error("Doubt solver error:", error);
 
-        sendBtn.onclick = transmitMessage;
-        userInput.addEventListener("keypress", (e) => {
-            if (e.key === "Enter") transmitMessage();
-        });
+            const loadingBubble = document.getElementById(loadingId);
 
-        // REACTIONARY LOBBY FEED UPVOTE ENGINE
-        function handleUpvote(node) {
-            let currentVal = parseInt(node.innerText.replace(/[^0-9]/g, ''));
-            if (!node.classList.contains("voted")) {
-                node.classList.add("voted");
-                node.style.color = "#ff9f43";
-                node.innerHTML = `<i class="fa-solid fa-thumbs-up"></i> ${currentVal + 1} Upvotes`;
-            } else {
-                node.classList.remove("voted");
-                node.style.color = "rgba(255,255,255,0.8)";
-                node.innerHTML = `<i class="fa-regular fa-thumbs-up"></i> ${currentVal - 1} Upvotes`;
-            }
+            loadingBubble.innerHTML = `
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <strong>LevelUp Core Agent:</strong>
+                Could not connect to the AI backend right now.
+            `;
         }
-    </script>
+    }
+
+    sendBtn.onclick = transmitMessage;
+
+    userInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") transmitMessage();
+    });
+
+    function handleUpvote(node) {
+        let currentVal = parseInt(node.innerText.replace(/[^0-9]/g, ''));
+
+        if (!node.classList.contains("voted")) {
+            node.classList.add("voted");
+            node.style.color = "#ff9f43";
+            node.innerHTML = `<i class="fa-solid fa-thumbs-up"></i> ${currentVal + 1} Upvotes`;
+        } else {
+            node.classList.remove("voted");
+            node.style.color = "rgba(255,255,255,0.8)";
+            node.innerHTML = `<i class="fa-regular fa-thumbs-up"></i> ${currentVal - 1} Upvotes`;
+        }
+    }
+</script>
 </body>
 </html>
