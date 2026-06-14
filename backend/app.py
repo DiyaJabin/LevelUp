@@ -1,12 +1,38 @@
-from db import (
-    init_db,
-    save_learning_content,
-    get_latest_learning_content,
-    get_user,
-    update_user_xp,
-    save_quiz_result,
-    get_latest_quiz_result
-)
+try:
+    from db import (
+        init_db,
+        save_learning_content,
+        get_latest_learning_content,
+        get_user,
+        update_user_xp,
+        save_quiz_result,
+        get_latest_quiz_result
+    )
+    DB_ENABLED = True
+except Exception as db_import_error:
+    print("Database disabled:", db_import_error)
+    DB_ENABLED = False
+
+    def init_db():
+        raise Exception("Database disabled")
+
+    def save_learning_content(content):
+        raise Exception("Database disabled")
+
+    def get_latest_learning_content():
+        return None
+
+    def get_user():
+        return None
+
+    def update_user_xp(total_xp, level):
+        return None
+
+    def save_quiz_result(result):
+        return None
+
+    def get_latest_quiz_result():
+        return None
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
