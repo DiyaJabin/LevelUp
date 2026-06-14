@@ -510,62 +510,88 @@
     </main>
 
     <script>
-        // CLIENT FLASHCARD POOL MATRIX DATASET
-        const flashcards = [
-            {
-                front: "What is Artificial Intelligence?",
-                back: "AI is the simulation of human intelligence by machines."
-            },
-            {
-                front: "What is Machine Learning?",
-                back: "A subset of AI focused on pattern identification straight from structured data pools."
-            },
-            {
-                front: "What operates as the primary role of a DBMS?",
-                back: "Database Management Systems coordinate storage, retrieval, and structural integrity of database records."
-            },
-            {
-                front: "What structural paradigm characterizes a Queue?",
-                back: "First-In, First-Out (FIFO) sequential data architecture pipelines."
-            }
-        ];
+    let flashcards = [];
+    let current = 0;
 
-        let current = 0;
+    const card = document.getElementById("flashcard");
+    const front = document.getElementById("frontText");
+    const back = document.getElementById("backText");
+    const reviewed = document.getElementById("reviewed");
+    const progress = document.getElementById("progress");
+    const generateBtn = document.getElementById("generateBtn");
 
-        const card = document.getElementById("flashcard");
-        const front = document.getElementById("frontText");
-        const back = document.getElementById("backText");
-        const reviewed = document.getElementById("reviewed");
-        const progress = document.getElementById("progress");
+    const fallbackFlashcards = [
+        {
+            front: "What is photosynthesis?",
+            back: "Photosynthesis is the process by which green plants make food using sunlight, carbon dioxide, and water.",
+            topic: "Photosynthesis"
+        },
+        {
+            front: "What is respiration?",
+            back: "Respiration is the process by which cells release energy from glucose.",
+            topic: "Respiration"
+        },
+        {
+            front: "What is genetics?",
+            back: "Genetics is the study of heredity and DNA.",
+            topic: "Genetics"
+        }
+    ];
 
-        // Click-flip mechanical triggers
-        card.onclick = () => card.classList.toggle("flip");
+    function loadFlashcardsFromStorage() {
+        const savedContent = localStorage.getItem("levelupLearningContent");
 
-        function loadCard() {
-            front.innerText = flashcards[current].front;
-            back.innerText = flashcards[current].back;
-            reviewed.innerText = current + 1;
-            progress.style.width = ((current + 1) / flashcards.length) * 100 + "%";
-            card.classList.remove("flip");
+        if (savedContent) {
+            const parsedContent = JSON.parse(savedContent);
+            flashcards = parsedContent.flashcards || [];
         }
 
-        document.getElementById("nextBtn").onclick = () => {
-            if (current < flashcards.length - 1) {
-                current++;
-                loadCard();
-            }
-        };
+        if (!flashcards.length) {
+            flashcards = fallbackFlashcards;
+        }
 
-        document.getElementById("prevBtn").onclick = () => {
-            if (current > 0) {
-                current--;
-                loadCard();
-            }
-        };
+        current = 0;
+        loadCard();
+    }
 
-        document.getElementById("generateBtn").onclick = () => {
-            alert("LevelUp AI: Synthesis Complete. Flashcard deck generated successfully into the viewport arena!");
-        };
-    </script>
+    card.onclick = () => card.classList.toggle("flip");
+
+    function loadCard() {
+        if (!flashcards.length) return;
+
+        front.innerText = flashcards[current].front;
+        back.innerText = flashcards[current].back;
+        reviewed.innerText = current + 1;
+        progress.style.width = ((current + 1) / flashcards.length) * 100 + "%";
+
+        const difficultyPill = document.querySelector(".difficulty-pill");
+        if (difficultyPill) {
+            difficultyPill.innerHTML = `<i class="fa-solid fa-shield-cat"></i> ${flashcards[current].topic || "General"} Deck`;
+        }
+
+        card.classList.remove("flip");
+    }
+
+    document.getElementById("nextBtn").onclick = () => {
+        if (current < flashcards.length - 1) {
+            current++;
+            loadCard();
+        }
+    };
+
+    document.getElementById("prevBtn").onclick = () => {
+        if (current > 0) {
+            current--;
+            loadCard();
+        }
+    };
+
+    generateBtn.onclick = () => {
+        loadFlashcardsFromStorage();
+        alert("LevelUp AI: Flashcard deck loaded from your generated learning content!");
+    };
+
+    loadFlashcardsFromStorage();
+</script>
 </body>
 </html>

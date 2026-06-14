@@ -216,3 +216,11 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+#Pycharm stuff
+.idea/
+*.zip
+.env
+.venv/
+venv/
+__pycache__/

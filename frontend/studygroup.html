@@ -565,17 +565,217 @@
     </main>
 
     <script>
-        // MOCK LOBBY DEPLOY INTERACTIVE SUITE ACTIONS
-        document.getElementById("createGroup").addEventListener("click", () => {
-            const nameNode = document.getElementById("groupNameIn").value;
-            if (nameNode.trim() === "") {
-                alert("Please input a valid structural lobby tag name.");
-                return;
-            }
-            alert("LevelUp System: Synced Study Lobby Loop [" + nameNode + "] initiated cleanly into server databases!");
-            document.getElementById("groupNameIn").value = "";
-            document.getElementById("groupSubjectIn").value = "";
+    function getQuizResult() {
+        const savedResult = localStorage.getItem("levelupQuizResult");
+
+        if (!savedResult) {
+            return null;
+        }
+
+        return JSON.parse(savedResult);
+    }
+
+    function renderRecommendedPartners(result) {
+        const studentGrid = document.querySelector(".student-grid");
+
+        if (!studentGrid) return;
+
+        const weakTopics = result?.weak_topics || [];
+        const groups = result?.recommended_groups || [];
+
+        if (!groups.length) {
+            studentGrid.innerHTML = `
+                <div class="student-card">
+                    <div class="student-identity">
+                        <div class="avatar">🤖</div>
+                        <div class="student-info">
+                            <h3>No AI matches yet</h3>
+                            <div class="compatibility-badge">Generate Quiz First</div>
+                            <div class="tags">
+                                <div class="tag">Complete a quiz to unlock study partners</div>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn" onclick="window.location.href='notes.html'">
+                        Go to Quiz <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            `;
+            return;
+        }
+
+        const avatars = ["🧑‍💻", "👩‍💻", "🚀", "🐼", "🦸"];
+        const names = ["Rahul", "Sneha", "Arjun", "Meera", "Dev"];
+
+        studentGrid.innerHTML = "";
+
+        groups.forEach((group, index) => {
+            const weakTopic = group.focus_topic || weakTopics[index] || "General";
+            const compatibility = Math.max(88, 96 - index * 3);
+
+            const card = document.createElement("div");
+            card.className = "student-card";
+
+            card.innerHTML = `
+                <div class="student-identity">
+                    <div class="avatar">${avatars[index % avatars.length]}</div>
+                    <div class="student-info">
+                        <h3>${names[index % names.length]}</h3>
+                        <div class="compatibility-badge">${compatibility}% Match Scale</div>
+                        <div class="tags">
+                            <div class="tag">Can help with ${weakTopic}</div>
+                            <div class="tag">Matched via weak-topic analysis</div>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn">
+                    Transmit Invite <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            `;
+
+            studentGrid.appendChild(card);
         });
-    </script>
+    }
+
+    function renderRecommendedLobbies(result) {
+        const groupGrid = document.querySelector(".group-grid");
+
+        if (!groupGrid) return;
+
+        const groups = result?.recommended_groups || [];
+
+        if (!groups.length) {
+            groupGrid.innerHTML = `
+                <div class="group-card">
+                    <div>
+                        <h3>General Science Quest Team</h3>
+                        <p>Complete a quiz to receive AI-personalized study lobby recommendations.</p>
+                    </div>
+                    <div>
+                        <div class="group-metrics">
+                            <div class="xp-value"><i class="fa-solid fa-bolt"></i> 2,000 Pool XP</div>
+                            <div class="rank-value"><i class="fa-solid fa-trophy"></i> Starter Lobby</div>
+                        </div>
+                        <button class="btn" style="width: 100%;">Connect Session</button>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        groupGrid.innerHTML = "";
+
+        groups.forEach((group, index) => {
+            const poolXp = 3500 + index * 600;
+            const rank = index + 1;
+
+            const card = document.createElement("div");
+            card.className = "group-card";
+
+            card.innerHTML = `
+                <div>
+                    <h3>${group.group_name}</h3>
+                    <p>Core Target Focus: ${group.focus_topic}</p>
+                    <p style="margin-top: 8px;">${group.match_reason || "Recommended based on your learning profile."}</p>
+                </div>
+                <div>
+                    <div class="group-metrics">
+                        <div class="xp-value"><i class="fa-solid fa-bolt"></i> ${poolXp.toLocaleString()} Pool XP</div>
+                        <div class="rank-value"><i class="fa-solid fa-trophy"></i> Match Rank #${rank}</div>
+                    </div>
+                    <button class="btn" style="width: 100%;">Connect Session</button>
+                </div>
+            `;
+
+            groupGrid.appendChild(card);
+        });
+    }
+
+    function renderLobbyTelemetry(result) {
+        const statBoxes = document.querySelectorAll(".stat-box h1");
+
+        if (!statBoxes.length) return;
+
+        const groups = result?.recommended_groups || [];
+
+        statBoxes[0].innerText = groups.length || 1;
+        statBoxes[1].innerText = "2 Hr";
+        statBoxes[2].innerText = result?.xp_earned ? `${result.xp_earned * 10} XP` : "0 XP";
+        statBoxes[3].innerText = result?.level ? `Lv ${result.level}` : "#--";
+    }
+
+    function renderMatchmakingInsight(result) {
+        const insightBox = document.querySelector(".insight-box");
+
+        if (!insightBox) return;
+
+        const weakTopics = result?.weak_topics || [];
+
+        if (!weakTopics.length) {
+            insightBox.innerHTML = `
+                <p>No weak topics detected yet. Complete a quiz campaign to unlock AI-powered matchmaking analytics.</p>
+                <div class="expected-gain">
+                    <i class="fa-solid fa-chart-line"></i> Anticipated Proficiency Acceleration: <strong>Pending Quiz Data</strong>
+                </div>
+            `;
+            return;
+        }
+
+        insightBox.innerHTML = `
+            <p>
+                Based on your latest quiz campaign, LevelUp detected learning gaps in
+                <strong>${weakTopics.join(", ")}</strong>. The system recommends joining lobbies
+                focused on these topics so you can revise with compatible study partners.
+            </p>
+            <div class="expected-gain">
+                <i class="fa-solid fa-chart-line"></i>
+                Anticipated Proficiency Acceleration: <strong>+18% Velocity</strong>
+            </div>
+        `;
+    }
+
+    document.getElementById("createGroup").addEventListener("click", () => {
+        const nameNode = document.getElementById("groupNameIn").value;
+        const subjectNode = document.getElementById("groupSubjectIn").value;
+
+        if (nameNode.trim() === "") {
+            alert("Please input a valid structural lobby tag name.");
+            return;
+        }
+
+        alert("LevelUp System: Synced Study Lobby Loop [" + nameNode + "] initiated cleanly into server databases!");
+
+        const groupGrid = document.querySelector(".group-grid");
+
+        const newCard = document.createElement("div");
+        newCard.className = "group-card";
+        newCard.innerHTML = `
+            <div>
+                <h3>${nameNode}</h3>
+                <p>Core Target Focus: ${subjectNode || "Custom Study Session"}</p>
+                <p style="margin-top: 8px;">User-created lobby for focused collaborative learning.</p>
+            </div>
+            <div>
+                <div class="group-metrics">
+                    <div class="xp-value"><i class="fa-solid fa-bolt"></i> 1,000 Pool XP</div>
+                    <div class="rank-value"><i class="fa-solid fa-trophy"></i> New Lobby</div>
+                </div>
+                <button class="btn" style="width: 100%;">Connect Session</button>
+            </div>
+        `;
+
+        groupGrid.prepend(newCard);
+
+        document.getElementById("groupNameIn").value = "";
+        document.getElementById("groupSubjectIn").value = "";
+    });
+
+    const quizResult = getQuizResult();
+
+    renderRecommendedPartners(quizResult);
+    renderRecommendedLobbies(quizResult);
+    renderLobbyTelemetry(quizResult);
+    renderMatchmakingInsight(quizResult);
+</script>
 </body>
 </html>

@@ -658,16 +658,134 @@
     </main>
 
     <script>
-        // ANIMATION HINTS FOR QUICK ACTIONS
-        const actionCards = document.querySelectorAll(".action-card");
-        actionCards.forEach(card => {
-            card.addEventListener("mouseenter", () => {
-                card.style.transform = "translateY(-5px) scale(1.02)";
-            });
-            card.addEventListener("mouseleave", () => {
-                card.style.transform = "translateY(0) scale(1)";
-            });
+    // Keep quick action hover animations
+    const actionCards = document.querySelectorAll(".action-card");
+    actionCards.forEach(card => {
+        card.addEventListener("mouseenter", () => {
+            card.style.transform = "translateY(-5px) scale(1.02)";
         });
-    </script>
+        card.addEventListener("mouseleave", () => {
+            card.style.transform = "translateY(0) scale(1)";
+        });
+    });
+
+    function loadDashboardData() {
+        const quizResult = JSON.parse(localStorage.getItem("levelupQuizResult")) || null;
+        const learningContent = JSON.parse(localStorage.getItem("levelupLearningContent")) || null;
+
+        if (!quizResult) {
+            return;
+        }
+
+        const statCards = document.querySelectorAll(".stat-card");
+
+        // Card 1: Level + XP
+        if (statCards[0]) {
+            const levelValue = statCards[0].querySelector(".value");
+            const xpSub = statCards[0].querySelector(".xp-sub");
+            const progressBar = statCards[0].querySelector(".progress-bar");
+
+            levelValue.innerText = `Level ${quizResult.level || 1}`;
+
+            const totalXp = quizResult.total_xp || 0;
+            const nextLevelXp = quizResult.next_level_xp || 100;
+
+            xpSub.innerText = `${totalXp} / ${nextLevelXp} Total XP`;
+
+            const progressPercent = Math.min((totalXp / nextLevelXp) * 100, 100);
+            progressBar.style.width = progressPercent + "%";
+        }
+
+        // Card 2: Streak
+        if (statCards[1]) {
+            statCards[1].querySelector(".value").innerText = "5 Days";
+            statCards[1].querySelector(".xp-sub").innerText = "Demo streak active";
+        }
+
+        // Card 3: Daily Quests
+        if (statCards[2]) {
+            statCards[2].querySelector(".value").innerText = "2 / 4";
+            statCards[2].querySelector(".xp-sub").innerText = "Quiz and flashcards synced";
+        }
+
+        // Card 4: Accuracy
+        if (statCards[3]) {
+            const score = quizResult.score || 0;
+            const total = quizResult.total || 1;
+            const accuracy = Math.round((score / total) * 100);
+
+            statCards[3].querySelector(".value").innerText = `${accuracy}%`;
+            statCards[3].querySelector(".xp-sub").innerText = "Latest quiz performance";
+        }
+
+        updateQuestTracker(quizResult, learningContent);
+        updateAchievements(quizResult);
+        updateHeader(learningContent);
+    }
+
+    function updateHeader(learningContent) {
+        const profileText = document.querySelector(".profile p");
+
+        if (!profileText) return;
+
+        if (learningContent && learningContent.subject) {
+            profileText.innerText = `Latest AI learning session: ${learningContent.subject}`;
+        }
+    }
+
+    function updateQuestTracker(quizResult, learningContent) {
+        const taskRows = document.querySelectorAll(".plan-block:first-child .task-row");
+
+        if (!taskRows.length) return;
+
+        const weakTopics = quizResult.weak_topics || [];
+        const subject = learningContent?.subject || "AI Generated Notes";
+
+        taskRows[0].innerHTML = `
+            <div class="task-label">
+                <i class="fa-regular fa-circle-check" style="color:#4ade80;"></i>
+                Complete AI Quiz on ${subject}
+            </div>
+            <span class="status-flag complete">Cleared</span>
+        `;
+
+        taskRows[1].innerHTML = `
+            <div class="task-label">
+                <i class="fa-regular fa-circle" style="color:#fbbf24;"></i>
+                Review Flashcards from Generated Deck
+            </div>
+            <span class="status-flag pending">Pending</span>
+        `;
+
+        taskRows[2].innerHTML = `
+            <div class="task-label">
+                <i class="fa-regular fa-circle" style="color:#fbbf24;"></i>
+                Join Study Lobby for ${weakTopics.length ? weakTopics.join(", ") : "revision"}
+            </div>
+            <span class="status-flag pending">Pending</span>
+        `;
+
+        taskRows[3].innerHTML = `
+            <div class="task-label">
+                <i class="fa-regular fa-circle-check" style="color:#4ade80;"></i>
+                AI detected weak topics and recommended groups
+            </div>
+            <span class="status-flag complete">Cleared</span>
+        `;
+    }
+
+    function updateAchievements(quizResult) {
+        const badges = document.querySelectorAll(".badge-item span");
+
+        if (!badges.length) return;
+
+        badges[0].innerText = "AI Quiz Cleared";
+        badges[1].innerText = "XP Gained";
+        badges[2].innerText = "Weak Topics Found";
+        badges[3].innerText = "Study Match Ready";
+    }
+
+    loadDashboardData();
+</script>
 </body>
 </html>

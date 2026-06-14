@@ -595,146 +595,298 @@
     </div>
 
     <script>
-    document.addEventListener("DOMContentLoaded", () => {
-        const fileInput = document.getElementById("fileInput");
-        const preview = document.getElementById("preview");
-        const generateBtn = document.getElementById("generateBtn");
-        const quizSection = document.getElementById("quizSection");
-        const questionText = document.getElementById("questionText");
-        const optionsContainer = document.getElementById("optionsContainer");
-        const currentQuestionEl = document.getElementById("currentQuestion");
-        const totalQuestionsEl = document.getElementById("totalQuestions");
-        const scoreEl = document.getElementById("score");
-        const nextBtn = document.getElementById("nextBtn");
-        const quizProgress = document.getElementById("quizProgress");
-        const analyticsCard = document.getElementById("analyticsCard");
-        const badgeSection = document.getElementById("badgeSection");
-        const rewardModal = document.getElementById("rewardModal");
-        const closeReward = document.getElementById("closeReward");
-        const achievement = document.getElementById("achievement");
+document.addEventListener("DOMContentLoaded", () => {
+    const API_BASE = "http://127.0.0.1:5000";
 
-        fileInput.addEventListener("change", () => {
-            preview.innerHTML = "";
-            const file = fileInput.files[0];
-            if (!file) return;
-            if (file.type.startsWith("image/")) {
-                const reader = new FileReader();
-                reader.onload = (e) => { preview.innerHTML = `<img src="${e.target.result}">`; };
-                reader.readAsDataURL(file);
-            } else {
-                preview.innerHTML = `<div style="padding:20px; background:rgba(255,255,255,0.06); border:1px solid var(--glass-border); border-radius:14px; font-size:13px; font-weight:600;"><i class="fa-regular fa-file-pdf" style="color:#ff7ebb;"></i> Verified Asset: ${file.name}</div>`;
-            }
-        });
+    const fileInput = document.getElementById("fileInput");
+    const preview = document.getElementById("preview");
+    const generateBtn = document.getElementById("generateBtn");
+    const quizSection = document.getElementById("quizSection");
+    const questionText = document.getElementById("questionText");
+    const optionsContainer = document.getElementById("optionsContainer");
+    const currentQuestionEl = document.getElementById("currentQuestion");
+    const totalQuestionsEl = document.getElementById("totalQuestions");
+    const scoreEl = document.getElementById("score");
+    const nextBtn = document.getElementById("nextBtn");
+    const quizProgress = document.getElementById("quizProgress");
+    const analyticsCard = document.getElementById("analyticsCard");
+    const badgeSection = document.getElementById("badgeSection");
+    const rewardModal = document.getElementById("rewardModal");
+    const closeReward = document.getElementById("closeReward");
+    const achievement = document.getElementById("achievement");
 
-        const quizQuestions = [
-            { question: "What is Machine Learning?", options: ["A subset of AI", "A relational database matrix", "A peripheral server interface infrastructure", "A standalone compiler application"], answer: 0 },
-            { question: "Which algorithm operates specifically as a classification methodology?", options: ["Linear Regression Curves", "Logistic Regression Frameworks", "K-Means Aggregation Clustering", "Apriori Association Maps"], answer: 1 },
-            { question: "What represents the complete translation signature of AI?", options: ["Artificial Intelligence", "Automated Internet", "Advanced Integration", "Artificial Interface"], answer: 0 },
-            { question: "Identify the verified supervised learning architecture algorithm loop:", options: ["K-Means Matrix", "DBSCAN Cluster Array", "Linear Regression Framework", "Principal Component Isolation (PCA)"], answer: 2 },
-            { question: "Artificial Neural Networks map conceptual architectural inspirations from?", options: ["Decision Tree Splits", "Relational Database Tables", "Human Brain Biological Structures", "Operating System Kernels"], answer: 2 }
-        ];
+    let quizQuestions = [];
+    let currentQuestion = 0;
+    let score = 0;
+    let answered = false;
+    let selectedAnswers = [];
 
-        let currentQuestion = 0;
-        let score = 0;
-        let answered = false;
+    const demoExtractedText = `
+        Photosynthesis is the process by which green plants make food using sunlight,
+        carbon dioxide and water. Chlorophyll captures sunlight for photosynthesis.
+        Respiration releases energy from glucose. Genetics is the study of heredity
+        and DNA.
+    `;
 
-        generateBtn.addEventListener("click", () => {
-            if (!fileInput.files.length) {
-                alert("Please attach asset documentation or image scans to continue.");
+    fileInput.addEventListener("change", () => {
+        preview.innerHTML = "";
+        const file = fileInput.files[0];
+        if (!file) return;
+
+        if (file.type.startsWith("image/")) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                preview.innerHTML = `<img src="${e.target.result}">`;
+            };
+            reader.readAsDataURL(file);
+        } else {
+            preview.innerHTML = `
+                <div style="padding:20px; background:rgba(255,255,255,0.06); border:1px solid var(--glass-border); border-radius:14px; font-size:13px; font-weight:600;">
+                    <i class="fa-regular fa-file-pdf" style="color:#ff7ebb;"></i>
+                    Verified Asset: ${file.name}
+                </div>
+            `;
+        }
+    });
+
+    generateBtn.addEventListener("click", async () => {
+        if (!fileInput.files.length) {
+            alert("Please attach asset documentation or image scans to continue.");
+            return;
+        }
+
+        generateBtn.innerHTML = `Generating Arena... <i class="fa-solid fa-spinner fa-spin"></i>`;
+        generateBtn.disabled = true;
+
+        try {
+            /*
+                TEMPORARY HACKATHON LOGIC:
+                Until OCR teammate finishes extraction, we send demoExtractedText.
+                Later, replace demoExtractedText with actual OCR output.
+            */
+
+            const response = await fetch(`${API_BASE}/api/process-notes`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    text: demoExtractedText
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                alert(data.error || "Failed to generate quiz.");
                 return;
             }
+
+            localStorage.setItem("levelupLearningContent", JSON.stringify(data));
+
+            quizQuestions = data.quiz || [];
+
+            if (!quizQuestions.length) {
+                alert("No quiz questions generated.");
+                return;
+            }
+
             quizSection.style.display = "block";
             currentQuestion = 0;
             score = 0;
-            scoreEl.innerText = score;
-            const count = parseInt(document.getElementById("questionCount").value);
-            totalQuestionsEl.innerText = count;
-            loadQuestion();
-            window.scrollTo({ top: quizSection.offsetTop - 40, behavior: "smooth" });
-        });
-
-        function loadQuestion() {
             answered = false;
-            const count = parseInt(document.getElementById("questionCount").value);
-            const q = quizQuestions[currentQuestion % quizQuestions.length];
-            questionText.innerText = q.question;
-            optionsContainer.innerHTML = "";
-            currentQuestionEl.innerText = currentQuestion + 1;
-            quizProgress.style.width = ((currentQuestion + 1) / count) * 100 + "%";
+            selectedAnswers = [];
 
-            q.options.forEach((option, index) => {
-                const div = document.createElement("div");
-                div.classList.add("option");
-                div.innerText = option;
-                div.addEventListener("click", () => {
-                    if (answered) return;
-                    answered = true;
-                    if (index === q.answer) {
-                        div.classList.add("correct");
-                        score++;
-                        scoreEl.innerText = score;
-                    } else {
-                        div.classList.add("wrong");
-                    }
-                });
-                optionsContainer.appendChild(div);
+            scoreEl.innerText = score;
+
+            const selectedCount = parseInt(document.getElementById("questionCount").value);
+            const actualCount = Math.min(selectedCount, quizQuestions.length);
+
+            totalQuestionsEl.innerText = actualCount;
+
+            loadQuestion();
+
+            window.scrollTo({
+                top: quizSection.offsetTop - 40,
+                behavior: "smooth"
             });
+
+        } catch (error) {
+            console.error("Generate quiz error:", error);
+            alert("Could not connect to Flask backend. Make sure Flask is running.");
+        } finally {
+            generateBtn.innerHTML = `Compile Active Arena <i class="fa-solid fa-wand-magic-sparkles"></i>`;
+            generateBtn.disabled = false;
+        }
+    });
+
+    function loadQuestion() {
+        answered = false;
+
+        const selectedCount = parseInt(document.getElementById("questionCount").value);
+        const count = Math.min(selectedCount, quizQuestions.length);
+
+        const q = quizQuestions[currentQuestion];
+
+        questionText.innerText = q.question;
+        optionsContainer.innerHTML = "";
+        currentQuestionEl.innerText = currentQuestion + 1;
+        totalQuestionsEl.innerText = count;
+
+        quizProgress.style.width = ((currentQuestion + 1) / count) * 100 + "%";
+
+        q.options.forEach((option) => {
+            const div = document.createElement("div");
+            div.classList.add("option");
+            div.innerText = option;
+
+            div.addEventListener("click", () => {
+                if (answered) return;
+
+                answered = true;
+
+                const correctAnswer = q.answer;
+                const selectedOption = option;
+
+                selectedAnswers.push({
+                    selected: selectedOption,
+                    correct: correctAnswer,
+                    topic: q.topic || "General"
+                });
+
+                if (selectedOption === correctAnswer) {
+                    div.classList.add("correct");
+                    score++;
+                    scoreEl.innerText = score;
+                } else {
+                    div.classList.add("wrong");
+
+                    const allOptions = optionsContainer.querySelectorAll(".option");
+                    allOptions.forEach(optionDiv => {
+                        if (optionDiv.innerText === correctAnswer) {
+                            optionDiv.classList.add("correct");
+                        }
+                    });
+                }
+            });
+
+            optionsContainer.appendChild(div);
+        });
+    }
+
+    nextBtn.addEventListener("click", () => {
+        if (!answered) {
+            alert("Please declare a response choice to clear the verification node.");
+            return;
         }
 
-        nextBtn.addEventListener("click", () => {
-            if (!answered) {
-                alert("Please declare a response choice to clear the verification node.");
-                return;
-            }
-            const count = parseInt(document.getElementById("questionCount").value);
-            currentQuestion++;
-            if (currentQuestion < count) {
-                loadQuestion();
-            } else {
-                finishQuiz();
-            }
-        });
+        const selectedCount = parseInt(document.getElementById("questionCount").value);
+        const count = Math.min(selectedCount, quizQuestions.length);
 
-        function finishQuiz() {
-            const count = parseInt(document.getElementById("questionCount").value);
-            const accuracy = Math.round((score / count) * 100);
+        currentQuestion++;
+
+        if (currentQuestion < count) {
+            loadQuestion();
+        } else {
+            finishQuiz();
+        }
+    });
+
+    async function finishQuiz() {
+        const selectedCount = parseInt(document.getElementById("questionCount").value);
+        const count = Math.min(selectedCount, quizQuestions.length);
+
+        try {
+            const response = await fetch(`${API_BASE}/api/submit-quiz`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    answers: selectedAnswers
+                })
+            });
+
+            const result = await response.json();
+
+            localStorage.setItem("levelupQuizResult", JSON.stringify(result));
+
+            const accuracy = Math.round((result.score / result.total) * 100);
+
             let performance = "Needs Revision";
             if (accuracy >= 90) performance = "Elite Bracket";
             else if (accuracy >= 70) performance = "Master Tier";
             else if (accuracy >= 50) performance = "Provisional Tier";
 
             document.getElementById("accuracyValue").innerText = accuracy + "%";
-            document.getElementById("correctValue").innerText = score;
+            document.getElementById("correctValue").innerText = result.score;
             document.getElementById("performanceValue").innerText = performance;
-            document.getElementById("xpValue").innerText = score * 50;
+            document.getElementById("xpValue").innerText = result.xp_earned;
 
             analyticsCard.style.display = "block";
             badgeSection.style.display = "block";
             rewardModal.style.display = "flex";
             achievement.style.right = "30px";
 
-            setTimeout(() => { achievement.style.right = "-450px"; }, 4000);
+            setTimeout(() => {
+                achievement.style.right = "-450px";
+            }, 4000);
+
+            const weakTopicsText = result.weak_topics && result.weak_topics.length
+                ? result.weak_topics.join(", ")
+                : "No weak topics detected";
 
             quizSection.innerHTML = `
                 <h2><i class="fa-solid fa-square-poll-vertical"></i> Quest Arena Concluded</h2>
-                <br><h1>Final Telemetry Score: ${score}/${count}</h1><br>
-                <p>Accuracy Target Cleared: <strong>${accuracy}%</strong></p><br>
-                <button class="btn" style="width:100%;" onclick="downloadResults()"><i class="fa-solid fa-file-arrow-down"></i> Export Telemetry Report</button>
+                <br>
+                <h1>Final Telemetry Score: ${result.score}/${result.total}</h1>
+                <br>
+                <p>Accuracy Target Cleared: <strong>${accuracy}%</strong></p>
+                <p>XP Earned: <strong>${result.xp_earned}</strong></p>
+                <p>Total XP: <strong>${result.total_xp}</strong></p>
+                <p>Current Level: <strong>${result.level}</strong></p>
+                <p>Weak Topics: <strong>${weakTopicsText}</strong></p>
+                <br>
+                <button class="btn" style="width:100%;" onclick="downloadResults()">
+                    <i class="fa-solid fa-file-arrow-down"></i> Export Telemetry Report
+                </button>
             `;
+
+        } catch (error) {
+            console.error("Submit quiz error:", error);
+            alert("Could not submit quiz result to backend.");
         }
+    }
 
-        window.downloadResults = function() {
-            const accuracy = document.getElementById("accuracyValue").innerText;
-            const text = `LEVELUP AI - INSTANT RUN ANALYSIS EVALUATION\nAccuracy Secured: ${accuracy}\nTimestamp Sync: 2026\nSystem Framework Status: Confirmed`;
-            const blob = new Blob([text], { type: "text/plain" });
-            const a = document.createElement("a");
-            a.href = URL.createObjectURL(blob);
-            a.download = "LevelUp_Telemetry_Report.txt";
-            a.click();
-        };
+    window.downloadResults = function() {
+        const result = JSON.parse(localStorage.getItem("levelupQuizResult")) || {};
+        const accuracy = document.getElementById("accuracyValue").innerText;
 
-        closeReward.addEventListener("click", () => { rewardModal.style.display = "none"; });
+        const text = `
+LEVELUP AI - INSTANT RUN ANALYSIS EVALUATION
+
+Score: ${result.score || 0}/${result.total || 0}
+Accuracy Secured: ${accuracy}
+XP Earned: ${result.xp_earned || 0}
+Total XP: ${result.total_xp || 0}
+Level: ${result.level || 1}
+Weak Topics: ${(result.weak_topics || []).join(", ")}
+Recommended Groups: ${(result.recommended_groups || []).map(g => g.group_name).join(", ")}
+
+System Framework Status: Confirmed
+        `;
+
+        const blob = new Blob([text], { type: "text/plain" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "LevelUp_Telemetry_Report.txt";
+        a.click();
+    };
+
+    closeReward.addEventListener("click", () => {
+        rewardModal.style.display = "none";
     });
-    </script>
+});
+</script>
 </body>
 </html>
