@@ -784,7 +784,16 @@
         badges[2].innerText = "Weak Topics Found";
         badges[3].innerText = "Study Match Ready";
     }
+    function updateUserName() {
+    const savedName = localStorage.getItem("levelupUserName") || "Player";
 
+    document.querySelectorAll("h1, h2, h3, h4, p, span, div").forEach(node => {
+        if (node.children.length === 0 && node.innerText.includes("Player")) {
+            node.innerText = node.innerText.replaceAll("Player", savedName);
+        }
+    });
+}
+    updateUserName();
     loadDashboardData();
 </script>
 </body>

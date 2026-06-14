@@ -506,6 +506,124 @@ Rules:
             except Exception as delete_error:
                 print("Could not delete uploaded Gemini file:", delete_error)
 
+def get_safe_fallback_content(difficulty="Medium", quiz_type="MCQ Arena", question_count="5", reason="AI generation was unavailable."):
+    fallback_quiz = [
+        {
+            "id": 1,
+            "question": "What should a student do first after reading study material?",
+            "options": [
+                "Test understanding using active recall",
+                "Ignore difficult topics",
+                "Only change the file name",
+                "Skip revision completely"
+            ],
+            "answer": "Test understanding using active recall",
+            "topic": "Active Recall",
+            "difficulty": difficulty
+        },
+        {
+            "id": 2,
+            "question": "Why are flashcards useful for revision?",
+            "options": [
+                "They support quick repeated practice",
+                "They replace all learning",
+                "They only store images",
+                "They remove the need for quizzes"
+            ],
+            "answer": "They support quick repeated practice",
+            "topic": "Flashcards",
+            "difficulty": difficulty
+        },
+        {
+            "id": 3,
+            "question": "What does weak-topic analysis help identify?",
+            "options": [
+                "Concepts that need more practice",
+                "The website background color",
+                "The user's password",
+                "Only the uploaded file name"
+            ],
+            "answer": "Concepts that need more practice",
+            "topic": "Weak Topic Analysis",
+            "difficulty": difficulty
+        },
+        {
+            "id": 4,
+            "question": "What is the benefit of XP in a learning platform?",
+            "options": [
+                "It rewards progress and keeps learners motivated",
+                "It deletes wrong answers",
+                "It disables revision",
+                "It hides quiz results"
+            ],
+            "answer": "It rewards progress and keeps learners motivated",
+            "topic": "Gamification",
+            "difficulty": difficulty
+        },
+        {
+            "id": 5,
+            "question": "Why are study lobbies recommended?",
+            "options": [
+                "To help learners revise weak topics with peers",
+                "To remove flashcards",
+                "To stop quiz generation",
+                "To skip learning analytics"
+            ],
+            "answer": "To help learners revise weak topics with peers",
+            "topic": "Study Lobbies",
+            "difficulty": difficulty
+        }
+    ]
+
+    if question_count.isdigit():
+        fallback_quiz = fallback_quiz[:int(question_count)]
+
+    return {
+        "subject": "Uploaded Study Material",
+        "topics": [
+            "Active Recall",
+            "Flashcards",
+            "Weak Topic Analysis",
+            "Gamification",
+            "Study Lobbies"
+        ],
+        "summary": f"{reason} LevelUp generated a safe revision session so the quiz, flashcards, dashboard, analytics, and study lobby flow can continue.",
+        "quiz": fallback_quiz,
+        "flashcards": [
+            {
+                "front": "What is active recall?",
+                "back": "Active recall is a study method where learners test themselves by retrieving information from memory.",
+                "topic": "Active Recall"
+            },
+            {
+                "front": "Why are flashcards useful?",
+                "back": "Flashcards help learners revise key ideas quickly through repeated practice.",
+                "topic": "Flashcards"
+            },
+            {
+                "front": "What is weak-topic analysis?",
+                "back": "Weak-topic analysis identifies concepts where the learner made mistakes and needs more practice.",
+                "topic": "Weak Topic Analysis"
+            },
+            {
+                "front": "What does XP represent?",
+                "back": "XP represents learning progress and rewards the student for completing activities.",
+                "topic": "Gamification"
+            },
+            {
+                "front": "What are study lobbies?",
+                "back": "Study lobbies are peer learning spaces recommended based on weak topics or revision needs.",
+                "topic": "Study Lobbies"
+            }
+        ],
+        "extracted_text": reason,
+        "config": {
+            "difficulty": difficulty,
+            "quiz_type": quiz_type,
+            "question_count": question_count
+        }
+    }
+
 @app.route("/api/process-file", methods=["POST"])
 def process_file():
     if "file" not in request.files:
@@ -546,78 +664,14 @@ def process_file():
 
         except Exception as pdf_gemini_error:
             print("Gemini PDF Files API failed:", pdf_gemini_error)
-            print("Returning safe fallback content because Gemini quota failed.")
+            print("Returning safe fallback content because Gemini PDF processing failed.")
 
-            return jsonify({
-                "subject": "Uploaded PDF Study Session",
-                "topics": [
-                    "Pressure Measurement",
-                    "Temperature Measurement",
-                    "Specialized Sensors",
-                    "Thermistor"
-                ],
-                "summary": "The uploaded PDF was received, but Gemini quota was temporarily exhausted. LevelUp is showing a safe demo fallback based on the current sensor-related session.",
-                "quiz": [
-                    {
-                        "id": 1,
-                        "question": "What is the main purpose of a thermistor?",
-                        "options": ["Measure temperature changes", "Store electric charge", "Generate light",
-                                    "Measure time"],
-                        "answer": "Measure temperature changes",
-                        "topic": "Thermistor",
-                        "difficulty": difficulty
-                    },
-                    {
-                        "id": 2,
-                        "question": "Pressure sensors are mainly used to measure:",
-                        "options": ["Force per unit area", "Light intensity", "Sound frequency", "Chemical color"],
-                        "answer": "Force per unit area",
-                        "topic": "Pressure Measurement",
-                        "difficulty": difficulty
-                    },
-                    {
-                        "id": 3,
-                        "question": "A sensor converts a physical quantity into:",
-                        "options": ["A measurable signal", "A random number", "A database table", "A password"],
-                        "answer": "A measurable signal",
-                        "topic": "Specialized Sensors",
-                        "difficulty": difficulty
-                    }
-                ],
-                "flashcards": [
-                    {
-                        "front": "What is a thermistor?",
-                        "back": "A thermistor is a resistor whose resistance changes with temperature.",
-                        "topic": "Thermistor"
-                    },
-                    {
-                        "front": "What does a pressure sensor measure?",
-                        "back": "It measures pressure, usually force per unit area.",
-                        "topic": "Pressure Measurement"
-                    },
-                    {
-                        "front": "What is the role of a sensor?",
-                        "back": "A sensor detects a physical quantity and converts it into a measurable signal.",
-                        "topic": "Specialized Sensors"
-                    },
-                    {
-                        "front": "What is temperature measurement?",
-                        "back": "It is the process of measuring how hot or cold a body or environment is.",
-                        "topic": "Temperature Measurement"
-                    },
-                    {
-                        "front": "Why are sensors useful?",
-                        "back": "They help systems monitor real-world conditions and respond automatically.",
-                        "topic": "Sensors"
-                    }
-                ],
-                "extracted_text": "PDF uploaded successfully. Gemini quota fallback used.",
-                "config": {
-                    "difficulty": difficulty,
-                    "quiz_type": quiz_type,
-                    "question_count": question_count
-                }
-            })
+            return jsonify(get_safe_fallback_content(
+                difficulty=difficulty,
+                quiz_type=quiz_type,
+                question_count=question_count,
+                reason="PDF uploaded successfully, but Gemini PDF processing was unavailable."
+            ))
 
     # OCR extraction
     try:
@@ -659,77 +713,12 @@ def process_file():
     except Exception as gemini_error:
         print("Gemini error after OCR:", gemini_error)
 
-        fallback_quiz = [
-            {
-                "id": 1,
-                "question": "What is photosynthesis?",
-                "options": [
-                    "Food-making process in plants",
-                    "Energy release in cells",
-                    "Study of DNA",
-                    "Water transport in plants"
-                ],
-                "answer": "Food-making process in plants",
-                "topic": "Photosynthesis",
-                "difficulty": difficulty
-            },
-            {
-                "id": 2,
-                "question": "What does respiration release from glucose?",
-                "options": [
-                    "Energy",
-                    "DNA",
-                    "Chlorophyll",
-                    "Carbon dioxide only"
-                ],
-                "answer": "Energy",
-                "topic": "Respiration",
-                "difficulty": difficulty
-            },
-            {
-                "id": 3,
-                "question": "What is genetics mainly about?",
-                "options": [
-                    "Heredity and DNA",
-                    "Plant food production",
-                    "Water transport",
-                    "Sunlight absorption"
-                ],
-                "answer": "Heredity and DNA",
-                "topic": "Genetics",
-                "difficulty": difficulty
-            }
-        ]
-
-        return jsonify({
-            "subject": "Biology",
-            "topics": ["Photosynthesis", "Respiration", "Genetics"],
-            "summary": "Fallback content shown because OCR or Gemini failed.",
-            "quiz": fallback_quiz[:int(question_count)] if question_count.isdigit() else fallback_quiz,
-            "flashcards": [
-                {
-                    "front": "What is photosynthesis?",
-                    "back": "Photosynthesis is the process by which green plants make food using sunlight, carbon dioxide, and water.",
-                    "topic": "Photosynthesis"
-                },
-                {
-                    "front": "What is respiration?",
-                    "back": "Respiration is the process by which cells release energy from glucose.",
-                    "topic": "Respiration"
-                },
-                {
-                    "front": "What is genetics?",
-                    "back": "Genetics is the study of heredity and DNA.",
-                    "topic": "Genetics"
-                }
-            ],
-            "extracted_text": extracted_text[:1000],
-            "config": {
-                "difficulty": difficulty,
-                "quiz_type": quiz_type,
-                "question_count": question_count
-            }
-        })
+        return jsonify(get_safe_fallback_content(
+            difficulty=difficulty,
+            quiz_type=quiz_type,
+            question_count=question_count,
+            reason="File was processed, but Gemini quiz generation was unavailable."
+        ))
 @app.route("/api/doubt", methods=["POST"])
 def solve_doubt():
     try:
@@ -789,4 +778,5 @@ Student doubt:
         })
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=True)

@@ -282,13 +282,40 @@
         });
 
         // Redirect handlers to send users cleanly to dashboard.html on form submissions
+       function saveUserSession(formType) {
+    let emailInput;
+    let nameInput;
+
+    if (formType === "login") {
+                emailInput = loginForm.querySelector("input[type='email']");
+            } else {
+                emailInput = signupForm.querySelector("input[type='email']");
+                nameInput = signupForm.querySelector("input[type='text']");
+            }
+
+            const email = emailInput ? emailInput.value.trim() : "";
+            let playerName = "Player";
+
+            if (nameInput && nameInput.value.trim()) {
+                playerName = nameInput.value.trim();
+            } else if (email.includes("@")) {
+                playerName = email.split("@")[0];
+                playerName = playerName.charAt(0).toUpperCase() + playerName.slice(1);
+            }
+
+            localStorage.setItem("levelupUserName", playerName);
+            localStorage.setItem("levelupUserEmail", email);
+        }
+
         loginForm.addEventListener("submit", (e) => {
             e.preventDefault();
+            saveUserSession("login");
             window.location.href = "dashboard.html";
         });
 
         signupForm.addEventListener("submit", (e) => {
             e.preventDefault();
+            saveUserSession("signup");
             window.location.href = "dashboard.html";
         });
 
